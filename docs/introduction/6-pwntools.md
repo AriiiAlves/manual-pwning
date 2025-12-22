@@ -6,7 +6,7 @@ Pwntools é uma biblioteca do python para CTFs feita para desenvolvimento de exp
 
 Para instalar, use o comando: `sudo pip install pwn`
 
-## 6.1 Pwntools CheatSheet
+## Pwntools CheatSheet
 
 O pwntools se baseia na ideia de que podemos enviar inputs a um programa ou servidor, contendo dados que nos levam a manipular o programa como quisermos.
 

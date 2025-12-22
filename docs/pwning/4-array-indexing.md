@@ -34,7 +34,7 @@ Fique atento se o array é de `int`, `float`, etc, pois o tamanho de cada bloco 
 
 Basicamente, acessar os índices de um array de inteiros é colocar um "gancho" em um endereço de memória e ir somando 4 bytes para chegar a cada índice, certo?
 
-Porém, se acessarmos o índice -1, o compilador irá ler: `array[-1] = 0x7ffd1234 (-1) * 0x4`. Estaremos acessando uma parte da memória que não tem nada a ver com o array, pois passamos do limite dele (de 0 a n).
+Porém, se acessarmos o índice -1, o compilador irá ler: `array[-1] = 0x7ffd1234 (-1) * 0x4`. Estaremos acessando uma parte da memória que não tem nada a ver com o array, pois passamos do limite dele (de 0 a n). É um vazamento de memória (memory leak).
 
 Isso só pode ser explorado se pudermos manipular o índice do array:
 

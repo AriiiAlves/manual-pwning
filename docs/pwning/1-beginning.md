@@ -4,7 +4,7 @@ title: "Pwning"
 
 Antes de ler esse material, é importante você já ter visto o material introdutório a Rev, onde abordamos sobre como entender e utilizar assembly, debuggers e decompillers como Ghidra. Aqui, vamos aprender as vulnerabilidades e praticar em binários.
 
-## 1.1 Roteiro de preparo para pwning
+## Roteiro de preparo para pwning
 
 Este roteiro ajuda a entender como lidar com o binário inicialmente:
 

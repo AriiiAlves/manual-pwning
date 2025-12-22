@@ -23,7 +23,7 @@ Para vencer esse obstáculo, você teria que vazar um endereço de memória, com
 
 Nesses desafios, essa proteção está desativada, e você pode apenas copiar e colar os endereços. Mais adiante abordaremos sobre isso.
 
-### 2.3.1 Cuidado ao sobrescrever Return Address: Desalinhamento de Stack
+### Cuidado ao sobrescrever Return Address: Desalinhamento de Stack
 
 Existem algumas funções importantes que utilizam instruções que exigem que a Stack esteja alinhada, como, por exemplo, a função `system("./bin/sh")`. Se seu objetivo for chamar uma função que tenha essa função dentro, o programa vai resultar em falha de segmentação.
 

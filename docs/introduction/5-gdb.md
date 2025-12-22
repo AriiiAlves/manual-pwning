@@ -6,7 +6,7 @@ GDB, um debbuger do GNU, é uma ótima ferramenta para **analisar binários em e
 
 Normalmente, o combo é Ghidra + GDB: Abra o Ghidra para ter uma ideia do que o código faz e use o GDB para tentar explorar as vulnerabilidades e analisar o binário em execução.
 
-## 5.1 Instalando e executando
+## Instalando e executando
 
 Há três versões do `gdb`. O `gdb` clássico já vem instalado junto com o compilador do C ou C++. 
 
@@ -22,7 +22,7 @@ Baixe o `pwndbg-gdb` com: `curl -qsL 'https://install.pwndbg.re' | sh -s -- -t p
 
 E execute com: `pwndbg ./meu_binario`
 
-## 5.2 Como usar
+## Como usar
 
 O intuito do GDB é parar a execução do programa em certos lugares, analisar e prosseguir.
 
@@ -58,7 +58,7 @@ Dump of assembler code for function main:
    0x08048428 <+45>:	ret    
 End of assembler dump.
 ```
-### 5.2.1 Breakpoints
+### Breakpoints
 
 No GDB podemos usar breakpoints, que são lugares onde o GDB **para a execução** para permitir examinar o programa. O mais comum é colocarmos o **primeiro breakpoint na main** (a função principal que contém todo o código fonte). Podemos colocar `break main`  ou `b main` .
 
@@ -82,7 +82,7 @@ Para deletar um breakpoint:
 
 - `b *puts` (* significa endereço)  e `run`
 
-### 5.2.2 Console de debug
+### Console de debug
 
 Quando rodamos o binário com `run` e o GDB tenta executar a instrução na qual colocamos o break, o processo vai pausar e dropar na ela o **console de debug**:
 
@@ -283,7 +283,7 @@ Se houvesse mais funções, mostraria algo como:
 [#1] 0x... → função_chamadora()
 [#2] 0x... → main()
 ```
-### 5.2.3 Visualizando
+### Visualizando
 
 É possível ver que o registrador `esp`  armazena o valor `0xffffd0d0` , que é um ponteiro. (visível no começo, na aba de registradores)
 
@@ -303,7 +303,7 @@ Para ver o stack frame (seção da stack alocada para uma única função)
 
 - `info frame`
 
-### 5.2.4 Mudando valores
+### Mudando valores
 
 Se quisermos mudar o valor armazenado em `0x08048451`  para `0xfacade` :
 
@@ -311,11 +311,11 @@ Se quisermos mudar o valor armazenado em `0x08048451`  para `0xfacade` :
 
 Assim, podemos manipular o código do jeito que quisermos.
 
-## 5.3 Arquivos compilados e Debugging symbols
+## Arquivos compilados e Debugging symbols
 
 Debugging symbols são **metadados** embutidos no arquivo executável (binário) que fornecem **informações de mapeamento entre o código binário e o código fonte original**. Caso essas informações não estejam presentes no arquivo, a análise fica um pouco mais difícil, pois perdemos algumas informações.
 
-### 5.3.1 Compilando com -g
+### Compilando com -g
 
 No comando abaixo, estamos compilando o arquivo `main.c`, que pode ser qualquer coisa, como um simples `printf("Hello World!")`. 
 
@@ -349,7 +349,7 @@ Comandos principais navegar no GDB em um executável com `-g`:
 (gdb) info args         # Argumentos da função
 ```
 
-### 5.3.2 Compilando sem -g
+### Compilando sem -g
 
 Sem `-g`:
 
@@ -377,7 +377,7 @@ Comandos principais navegar no GDB em um executável sem `-g`:
 - `next`
 - `info locals`
 
-### 5.3.3 Compilando sem -g + stripped
+### Compilando sem -g + stripped
 
 Outra ocasião é quando o arquivo foi completamente `stripped` - Todos os símbolos foram removidos, incluindo os símbolos básicos das funções. As funções perdem seus nomes, inclusive a `main`. Assim, `b main` não irá funcionar.
 
@@ -413,7 +413,7 @@ Para navegar com o GDB em arquivos assim, você terá que usar o entry point:
 
 Entry point é o endereço de memória onde o sistema começa a executar um programa. É a primeira instrução do código que a ser executada.
 
-### 5.3.4 Verificando nível de strip de um binário
+### Verificando nível de strip de um binário
 
 Para verificar, use o comando do `file arquivo`
 
@@ -427,7 +427,7 @@ Sem símbolos com stripped parcial: `..., stripped`
 
 Completamente stripped: `..., no symbols`
 
-## 5.4 Observação: Códigos não iniciam na main
+## Observação: Códigos não iniciam na main
 
 Os códigos não começam direto na função `main`, que é a primeira que o programador escreve. Na verdade, primeiro temos:
 

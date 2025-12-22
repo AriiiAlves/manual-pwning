@@ -29,7 +29,7 @@ int a = -2147483648; // Inteiro com valor mínimo
     printf("%d", a); // 2147483647
 ```
 
-Por que isso acontece? Vamos ver como as coisas estão armazenadas na memória:
+Por que isso acontece? Vamos ver como as coisas estão armazenadas na memória (lembrando, 8 bits = 1 byte):
 
 ```
 2147483647 decimal = 0x7FFFFFFF em hex = binário:

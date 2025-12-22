@@ -20,13 +20,13 @@ O Shellcode é a versão compacta disso, em assembly, que pode ser injetada na m
 
 A razão pela qual Shellcode possui sucesso é por que **o computador não diferencia dados e instruções**. Não importa onde ou como você fala para rodar, o computador VAI tentar rodar. Assim, mesmo que nosso input seja apenas dados, o computador não sabe disso.
 
-### 2.4.1 Inimigos do Shellcode: PIE e DEP
+### Inimigos do Shellcode: PIE e DEP
 
 PIE (Position-Independent Executables) é uma técnica de segurança que randomiza a memória do programa. Para realizar shellcode, precisamos saber exatamente o que vamos fazer. O PIE pode ser burlado se você conseguir vazar os endereços de memória que precisa, mas isso não vem ao caso agora.
 
 A outra proteção é o DEP (Data Execution Prevention). Esse é mais mortal, pois impede que áreas da memória que deveriam conter apenas dados (stack, heap) sejam executadas como código. O que contorna isso são os ataques de ROP. Ou seja, nada de injetar código novo, só podemos reaproveitar o que já existe no código.
 
-### 2.4.2 Usando BOF Shellcode
+### Usando BOF Shellcode
 
 Basicamente:
 
@@ -55,7 +55,7 @@ p.interactive()
 ```
 
 
-### 2.4.4 ShellCode + pwntools
+### ShellCode + pwntools
 
 ```py
 # Shellcodes prontos populares

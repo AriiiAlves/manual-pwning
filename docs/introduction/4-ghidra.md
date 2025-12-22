@@ -8,7 +8,7 @@ Além do Ghidra, temos opções como IDA, porém o Ghidra é de graça e open-so
 
 Requer: **Java Development Kit (JDK)** e **Python3**.
 
-## 4.1 Baixando (Linux)
+## Baixando (Linux)
 
 1. **Baixe o JDK** de acordo com a arquitetura do seu PC (x64 ou x82)
 2. **Descomprima o arquivo** com `tar -xyf file.tar.gz`
@@ -17,14 +17,14 @@ Requer: **Java Development Kit (JDK)** e **Python3**.
 5. Digite `java --version` para testar.
 6. Na pasta do ghidra, **rode o arquivo ghidraRun**
 
-## 4.1 Baixando (Windows)
+## Baixando (Windows)
 
 1. **Baixe o JDK** de acordo com a arquitetura do seu PC (x64 ou x82)
 2. **Execute o instalador**
 3. **Baixe o zip do GHIDRA** e descomprima
 4. Crie um atalho para o arquivo **ghidraRun** na sua área de trabalho
 
-## 4.2 Usando
+## Usando
 
 1. Crie um projeto em **New Project**
 2. **File > Import File** (ou drag and drop file)

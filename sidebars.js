@@ -62,6 +62,7 @@ const sidebars = {
         'pwning/array-indexing',
         'pwning/integer-overflow',
         'pwning/bad-seed',
+        'pwning/z3'
       ],
     },
     {
