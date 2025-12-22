@@ -51,3 +51,8 @@ Start site
 ```
 npm run start
 ```
+
+Deploy github pages (depois de alterar tudo do sidebars.js e criar a branch no repositório)
+```
+GIT_USER=seu-usuario npm run deploy
+```

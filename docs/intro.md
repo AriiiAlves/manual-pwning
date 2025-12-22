@@ -1,47 +1,13 @@
----
-sidebar_position: 1
----
+# Bem vindo
 
-# Tutorial Intro
+Este guia foi projetado para ser um manual o mais completo possível acerca de Engenharia Reversa e Pwning. Ele está todo em Português-BR.
 
-Let's discover **Docusaurus in less than 5 minutes**.
+Temos 2 tipos de conteúdo aqui: O for-theorists e o Fast-Food. Se você é um CTFer descontrolado e não suporta textos grandes, temos uma guia prática apenas com o que você deve saber para explorar vulnerabilidades e resolver desafios em CTFs.
 
-## Getting Started
+Porém, saber a teoria é importante para resolver desafios mais difíceis, então recomendo deixar de ser preguiçoso e aprender rev/pwning direito.
 
-Get started by **creating a new site**.
+Dito isso, bons estudos!
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+Créditos:
 
-### What you'll need
-
-- [Node.js](https://nodejs.org/en/download/) version 20.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
-
-## Generate a new site
-
-Generate a new Docusaurus site using the **classic template**.
-
-The classic template will automatically be added to your project after you run the command:
-
-```bash
-npm init docusaurus@latest my-website classic
-```
-
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
-
-The command also installs all necessary dependencies you need to run Docusaurus.
-
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
-```
-
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
-
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
-
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+- Nightmare (Assembly)

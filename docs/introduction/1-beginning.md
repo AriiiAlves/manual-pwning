@@ -1,5 +1,5 @@
 ---
-title: "Antes de tudo"
+title: "Introdução"
 ---
 
 Primeiramente, o que é Engenharia Reversa? Engenharia reversa é o ato de abrir arquivos binários e dissecá-los, de modo a entender como eles funcionam. Isto nos permite aprender muitas coisas sobre como os programas realmente funcionam por trás dos panos, além de entender as vulnerabilidades associadas a isto (o que é o mais divertido, convenhamos).

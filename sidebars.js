@@ -25,8 +25,11 @@ const sidebars = {
     {
       type: 'category',
       label: 'Introdução',
+      link: {
+        type: 'doc',
+        id: 'introduction/beginning'
+      },
       items: [
-        'introduction/beginning',
         'introduction/assembly',
         'introduction/endianness',
         'introduction/ghidra',
@@ -37,13 +40,19 @@ const sidebars = {
     {
       type: 'category',
       label: 'Pwning',
+      link: {
+        type: 'doc',
+        id: 'pwning/beginning'
+      },
       items: [
-        'pwning/beginning',
         {
           type: 'category',
           label: 'Buffer Overflow',
+          link: {
+            type: 'doc',
+            id: 'pwning/bof/2-0-bof'
+          },
           items: [
-            'pwning/bof/2-0-bof',
             'pwning/bof/2-1-bof-variables',
             'pwning/bof/2-2-bof-callfunction',
             'pwning/bof/2-3-bof-shellcode',
@@ -58,6 +67,10 @@ const sidebars = {
     {
       type: 'category',
       label: 'Fast Food',
+      link: {
+        type: 'doc',
+        id: 'fast-food/beginning'
+      },
       items: [
         {
           type: 'category',
