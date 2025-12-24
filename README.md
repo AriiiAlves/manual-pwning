@@ -64,7 +64,7 @@ If you are using GitHub pages for hosting, this command is a convenient way to b
 - **Z3 & Symbolic Execution** - Usa análise simbólica para modelar execução e resolver restrições automaticamente ✅
 
 ## Return Oriented Programming (ROP)
-- **Return Oriented Programming** - Encadeia instruções existentes (gadgets) terminadas em ret para construir payloads
+- **Return Oriented Programming** - Encadeia instruções existentes (gadgets) terminadas em ret para construir payloads ✅
   - **Partial Overwrite** - Modifica apenas parte de um endereço para contornar ASLR
   - **Stack Pivoting** - Redireciona a stack para região de memória controlada pelo atacante
   - **SIGROP (SROP)** - Explora sinais Unix usando estrutura sigcontext para controlar registradores

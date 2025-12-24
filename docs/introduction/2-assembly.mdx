@@ -83,6 +83,28 @@ Abaixo, temos uma lista de registradores e do modo como cada um é usado em um p
 |   r14           |     r14d      |     r14w      |     r14b   |Local (Uso Geral, Preservado em Chamadas)
 |   r15           |     r15d      |     r15w      |     r15b   |Local (Uso Geral, Preservado em Chamadas)
 
+OBS: O modo como os registradores são usados como argumentos de funções mudam para cada arquitetura. Mais adiante explicaremos o que é Stack.
+
+
+|Arquitetura e Sistema Operacional	|Convenção de Chamada	|Registradores para Parâmetros (Inteiros/Ponteiros)	|Parâmetros Excedentes|
+|-----------------------------------|-----------------------|------------------------------------------------------|---------------------|
+|**x86-64 (Linux/macOS/BSD)**|	System V AMD64 ABI	|1º: RDI|
+|||2º: RSI|
+|||3º: RDX|
+|||4º: RCX|
+|||5º: R8|
+|||6º: R9| Vão para a Stack (push da direita para esquerda).
+|**x86-64 (Windows)**|	Microsoft x64 ABI	|1º: RCX
+|||2º: RDX|
+|||3º: R8|
+|||4º: R9	|Vão para a Stack. Espaço de "shadow store" é reservado na pilha para os primeiros quatro parâmetros, mesmo que a função não use parâmetros.
+|**x86 (32-bit)**|	cdecl (Linux)	|Todos os parâmetros vão para a Stack (push da direita para esquerda). | Não se aplica.
+|**x86 (32-bit)**| stdcall (WinAPI)	|Todos os parâmetros vão para a Stack (push da direita para esquerda).	| Não se aplica.
+|**ARM (AArch64)**	|AAPCS64	|1º-8º: X0-X7	|Vão para a pilha.
+|**ARM (AArch32)**	|AAPCS	|1º-4º: R0-R3	|Vão para a pilha.
+
+Neste guia, utilizaremos a convenção Linux de 32-bit e 64-bit para analisar registradores e stack. Mas o que muda é apenas a convenção.
+
 ## Flags
 
 **Existe um registrador que contém flags**, o **RFLAGS** (x64 = 64 bits) ou **EFLAGS** (x86 = 32 bits). Cada bit do registrador é uma flag diferente.
@@ -247,7 +269,7 @@ A stack é uma estrutura de dados com duas operações: push e pop.
     ![Stack](./../../static/docs-img/stack_data_structure.png)
 </div>
 
-Imagine agora que temos uma função que chama outra função, e esta função chama outra função. **Função > Função >  Função**. Quando a ultima função retorna, devemos começar a resolver as coisas pela primeira função? Não. Vamos resolvendo pela ordem inversa, até que a segunda retorne na primeira, e a primeira conclua sua execução.
+Imagine agora que temos uma função que chama outra função, e esta função chama outra função. Quando a última função retorna, devemos começar a resolver as coisas pela primeira função? Não. Vamos resolvendo pela ordem inversa, até que a segunda retorne na primeira, e a primeira conclua sua execução (é como abrir uma matriosca (Boneca russa), cada chamada abre uma matriosca menor. Para colocarmos tudo de volta, temos que começar da última matriosca retirada até a primeira).
 
 ```C
 int function1(int n){
@@ -267,26 +289,69 @@ int main(){
 }
 ```
 
-Dessa forma, o conceito de Stack é utilizado na arquitetura de programas para organizar o fluxo do programa e o escopo de funções.
+Dessa forma, o conceito de Stack é utilizado na arquitetura de programas para **organizar o fluxo do programa e o escopo de funções**.
 
 ### Stack para Assembly
 
-A stack é uma **região contínua de memória no computador onde as variáveis locais serão armazenadas**. Ela é uma estrutura de dados com duas operações: **PUSH** (adicionar valor ao topo) e **POP** (retirar valor do topo).
+Para Assembly e o processador, a stack é uma **região contínua de memória no computador onde as variáveis locais serão armazenadas**. Ela é uma estrutura de dados com duas operações: **PUSH** (adicionar valor ao topo) e **POP** (retirar valor do topo).
 
 No assembly:
 - Instrução `push` - **Empilha** valor na stack
 - Instrução `pop` - **Desempilha** valor na stack
-- Registrador `RSP` - Possui ponteiro para **topo da stack** (endereço do último bloco de memória correspondente à stack)
-- Registrador `RBP` - Possui ponteiro para a **base da stack** (endereço do primeiro bloco de memória correspondente à stack)
 
-Na memória, **o topo da pilha "cresce negativamente"**. Assim, sempre que um valor é empilhado na stack, o valor de esp é decrescido.
+#### Stack Frame
 
-Lembre-se que **RSP e RBP NÃO ESTÃO NA STACK, eles são apenas ponteiros**, ou seja, contém os endereços que são a base e o topo da stack.
+A stack é dividida em partes menores, chamados **Stack Frames**. Toda função possui seu próprio Stack Frame, onde pode armazenar suas próprias variáveis locais. **Sempre que uma função chama uma outra função dentro de si, emplihamos um novo Stack Frame que será pertencente a essa nova função**. **Sempre que uma função retorna, destruímos seu stack frame**.
 
-A stack contém 4 elementos básicos, nesta ordem:
+- Registrador `RSP ou ESP` - Possui ponteiro para **topo do stack frame atual** (endereço do **último bloco** de memória pertencente ao stack frame da função atual)
+- Registrador `RBP ou EBP` - Possui ponteiro para a **base do stack frame atual** (endereço do **primeiro bloco** de memória pertencente ao stack frame da função atual)
 
-1. **Parâmetros** da **função atual** (isto acontece apenas se houverem mais parâmetros do que a quantidade de registradores disponíveis. **Caso contrário, os parâmetros são passados pelos registradores** `rdi`, `rsi`, `rdx`)
-2. **Endereço de retorno** para continuar a partir da **função antiga** (ou seja, a próxima instrução após a chamada da nova função)
+Na memória, **o topo da pilha (`RSP ou ESP`)"cresce negativamente"**. Assim, sempre que um valor novo é colocado no stack frame através de `push` (como uma nova variável), o valor de `ESP` é **decrescido**. Crescemos de endereços de memória maiores (como `0xffffffff`) até endereços de memória menores (como `0xfffffff0`). Podemos imaginar que, se fosse possível olhar a memória com uma lupa, a stack estaria de cabeça para baixo.
+
+Lembre-se que **RSP e RBP NÃO ESTÃO NA STACK, eles são apenas registradores do CPU que armazenam ponteiros**, ou seja, contém os endereços que são a base e o topo da stack.
+
+Imagine o seguinte código:
+
+```C
+1. int main(){ 
+2.    imprimir_soma(1, 2, 3);
+3.    int a  = 0;
+4.    return 0;
+5. }
+```
+
+Sempre que **chamamos uma nova função**, o Assembly faz:
+
+```
+; Primeiro, empilha argumentos da nova função (apenas a partir do 7° argumento. Os anteriores ficam em registradores. Se for 32-bits, TUDO fica na stack)
+push arg3           ; 3
+push arg2           ; 2
+push arg1           ; 1
+
+; Então o call
+call imprimir_soma
+; O call faz: push RIP (Return address) na pilha (depois que acabarmos a função, queremos voltar para a linha 3, certo?)
+; Depois: RIP = endereço da função (Começamos a executar a função)
+
+imprimir_soma:
+    ; SALVAR O FRAME ANTIGO
+    push rbp           ; 1. Salvar RBP antigo na pilha (após imprimir_soma, queremos continuar a função antiga main e resgatar seu stack frame)
+    
+    ; CONFIGURAR NOVO FRAME
+    mov rbp, rsp       ; 2. RBP = RSP ("Saltamos" o stack frame atual, e construímos um novo stack frame agora, com uma nova base)
+    
+    ; ALOCAR ESPAÇO PARA VARIÁVEIS LOCAIS
+    sub rsp, 0x20      ; 3. Reservar espaço na pilha
+```
+
+#### Elementos da Stack
+
+A stack contém 4 elementos básicos da base ao topo, nesta ordem:
+
+1. **Parâmetros** da **função atual** 
+    - Na arquitetura `x86-64` (64-bit) sob a convenção System V (Linux/Unix), os seis primeiros argumentos inteiros ou ponteiros são passados, nesta ordem, pelos registradores `RDI`, `RSI`, `RDX`, `RCX`, `R8` e `R9`. Argumentos adicionais vão para a pilha.
+    - Na arquitetura `x86` (32-bit) não há uso de registradores, todos os argumentos são passados pela pilha."
+2. **Return address** para `RIP` assumir e continuar a executar a **função antiga** (ou seja, a próxima instrução após a chamada da nova função)
 ```C
 int main(){ 
     imprimir_soma(1, 2);
@@ -301,107 +366,11 @@ int main(){
     ![Simple Stack](./../../static/docs-img/simple_stack.png)
 </div>
 
-Um ponto importante é que, no código assembly, **todos os dados presentes na stack são acessados com base no RBP** (`RBP-0x4` = Endereço para o qual RBP aponta acrescentado de 4 bytes).
+A arquitetura muda a organização da stack. Além da forma como os parâmetros são passados, se for 64-bit os endereços da stack estarão em **blocos de 8 bytes**. Se for 32-bit, os endereços da stack estarão em **blocos de 4 bytes**.
+
+Um ponto importante é que, no código assembly, **todos os dados presentes na stack são acessados com base no RBP** (`RBP-0x8` = Endereço para o qual RBP aponta acrescentado de 8 bytes).
 
 (Lembre-se que, quando mais alto o valor na pilha, ou seja, quanto mais próximo de RSP, mais decrescemos o valor de RBP, pois a stack cresce negativamente)
-
-### Exemplo de Uso de Stack
-
-Abaixo, temos um código em C e uma simulação de como eles estariam na stack.
-
-Código em **C**:
-
-```C
-// Compilado para arquitetura x86 (32 bits) com otimização mínima (ex: -O0)
-
-void simple_function(int p1, int p2, int p3) {
-    // Estas serão as Variáveis Locais 1, 2 e 3
-    int local1 = p1 * 2;
-    int local2 = p2 + 1;
-    int local3 = p3 - 1;
-
-    // Usar todas as variáveis garante que o compilador as crie na stack.
-    local1 = local2 + local3;
-}
-
-int main() {
-    // Chamada com 3 parâmetros
-    simple_function(10, 20, 30);
-    return 0; // Return address da simple_function aponta para aqui (chamada + 1)
-}
-```
-
-Código em **Assembly**:
-
-```assembly
-asm
-section .text
-    global simple_function
-    global main
-
-; int simple_function(int p1, int p2, int p3)
-simple_function:
-    ; Prólogo
-    push rbp
-    mov rbp, rsp
-
-    ; local1 = p1 * 2
-    mov eax, edi        ; Copia p1 (EDI) para EAX
-    shl eax, 1          ; Deslocamento de bits para a esquerda (multiplica por 2)
-    ; local1 fica armazenado em EAX
-
-    ; local2 = p2 + 1
-    mov ebx, esi        ; Copia p2 (ESI) para EBX
-    add ebx, 1          ; Adiciona 1 de EBX
-
-    ; local3 = p3 - 1
-    mov ecx, edx        ; Copia p3 (EDX) para ECX
-    sub ecx, 1        ; Subtrai 1 de ECX
-
-    ; local1 = local2 + local3
-    mov eax, ebx        ; Copia local2 para EAX (EAX é sobrescrito)
-    add eax, ecx        ; Adiciona ECX de EAX (local2 + local3)
-
-    ; Epílogo
-    pop rbp        ; Desempilha valor do RBP da função anterior salva
-    ret        ; Retorna
-
-; int main()
-main:
-    ; Prologue
-    push rbp
-    mov rbp, rsp
-
-    ; Call simple_function(10, 20, 30)
-    mov edi, 10
-    mov esi, 20
-    mov edx, 30
-    call simple_function
-
-    ; Return 0
-    mov eax, 0
-
-    ; Epilogue
-    pop rbp
-    ret
-```
-
-**Stack** ao entrar na função `simple_function`:
-
-<div styles="display: block; text-align:center">
-    <img src="./images/stack.png"/>
-</div>
-
-Perceba que a Stack está de 4 em 4 bytes (arquitetura x86 = 32 bits). Também perceba que localizamos as variáveis com base no EBP: 
-
-- **[EBP+16]** = parâmetro p3
-- **[EBP+12]** = Parâmetro p2
-- **[EBP+8]** = Parâmetro p1
-- **[EBP+4]** = Endereço de retorno
-- **[EBP]** = Valor do EBP da função anterior
-- **[EBP-4]** = local1 
-- **[EBP-8]** = local2
-- **[EBP-12]** = local3
 
 ## Assembly na prática
 

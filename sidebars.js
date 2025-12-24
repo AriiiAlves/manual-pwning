@@ -45,6 +45,7 @@ const sidebars = {
         id: 'pwning/beginning'
       },
       items: [
+        'pwning/1-1-protections',
         {
           type: 'category',
           label: 'Buffer Overflow',
@@ -62,9 +63,21 @@ const sidebars = {
         'pwning/array-indexing',
         'pwning/integer-overflow',
         'pwning/bad-seed',
-        'pwning/z3'
+        'pwning/z3',
+        {
+          type: 'category',
+          label: 'ROP (Return-Oriented Programming)',
+          link: {
+            type: 'doc',
+            id: 'pwning/rop/8-1-rop'
+          },
+          items: [
+            'pwning/rop/8-2-partial-overwrite',
+          ],
+        },
       ],
     },
+    /* Fast Food */
     {
       type: 'category',
       label: 'Fast Food',
@@ -89,7 +102,6 @@ const sidebars = {
           label: 'Pwning',
           items: [
             'fast-food/pwning/beginning',
-            'fast-food/pwning/protections',
             'fast-food/pwning/bof',
             'fast-food/pwning/bof-callfunction',
             'fast-food/pwning/bof-shellcode'

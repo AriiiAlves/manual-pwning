@@ -162,8 +162,8 @@ No exemplo acima, temos, por exemplo:
 
 - **$eax: 0xf7fb9dd8 → 0xffffd19c → 0xffffd389 → "CLUTTER_IM_MODULE=xim"**
     - `eax` contém o endereço `0xf7fb9dd8`
-    - `0xf7fb9dd8` contém o valor `0xffffd19c`
-    - `0xffffd19c` aponta para `0xffffd389`
+    - `0xf7fb9dd8` contém o endereço `0xffffd19c`
+    - `0xffffd19c` contém o endereço `0xffffd389`
     - `0xffffd389` contém a a string "`CLUTTER_IM_MODULE=xim`" (processos internos não relevantes do C)
 - **$ebx**
     - 0x0 - Vazio
