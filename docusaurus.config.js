@@ -10,9 +10,9 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Alvz Pwning',
-  tagline: 'Pwning Handbook em PT-BR',
-  favicon: 'img/favicon.ico',
+  title: 'CatchTheFox',
+  tagline: 'Cyber HandBook em Português',
+  favicon: 'img/logo.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -94,7 +94,7 @@ const config = {
         respectPrefersColorScheme: true,
       },
       navbar: {
-        title: 'Alvz Pwning',
+        title: 'CatchTheFox',
         logo: {
           alt: 'My Site Logo',
           src: 'img/logo.svg',
@@ -104,11 +104,11 @@ const config = {
             type: 'docSidebar',
             sidebarId: 'tutorialSidebar',
             position: 'left',
-            label: 'Guide',
+            label: 'HandBook',
           },
           /*{to: '/blog', label: 'Blog', position: 'left'},*/ // Ativar futuramente caso queira fazer um blog
           {
-            href: 'https://github.com/ariiialves',
+            href: 'https://github.com/ariiialves/manual-pwning',
             label: 'GitHub',
             position: 'right',
           },
@@ -118,46 +118,38 @@ const config = {
         style: 'dark',
         links: [
           {
-            title: 'Docs',
+            title: 'Aprenda',
             items: [
               {
-                label: 'Tutorial',
+                label: 'HandBook',
                 to: '/docs/intro',
               },
             ],
           },
           {
-            title: 'Community',
+            title: 'Comunidade',
             items: [
               {
-                label: 'Stack Overflow',
-                href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-              },
-              {
                 label: 'Discord',
-                href: 'https://discordapp.com/invite/docusaurus',
-              },
-              {
-                label: 'X',
-                href: 'https://x.com/docusaurus',
-              },
+                href: 'https://discord.gg/pFSq368vu7',
+              }
             ],
           },
           {
-            title: 'More',
+            title: 'Mais',
             items: [
-              {
+              /*{
                 label: 'Blog',
                 to: '/blog',
-              },
+              },*/
               {
                 label: 'GitHub',
-                href: 'https://github.com/facebook/docusaurus',
+                href: 'https://github.com/ariiialves/manual-pwning',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+        /*copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,*/
       },
       prism: {
         theme: prismThemes.github,

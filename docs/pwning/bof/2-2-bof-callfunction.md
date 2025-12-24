@@ -1,5 +1,5 @@
 ---
-title: "Buffer Overflow - Call Function"
+title: "Buffer Overflow - Return Address"
 sidebar_position: 4
 ---
 
@@ -9,7 +9,7 @@ Sempre que uma função chega ao final, ela chama a instrução `ret`, que desem
 
 Podemos utilizar Buffer Overflow para **sobrescrever esse endereço de retorno e ir para o lugar que quisermos no código**. Sim, podemos chamar qualquer função, mesmo que ela nunca seja chamada no código (ela só precisa existir).
 
-Para fazer um Buffer Overflow Call Function:
+Para fazer um Buffer Overflow Return Address:
 
 1. Verifique informações do arquivo com `file arquivo`
 2. Abra o programa no Ghidra ou Debugger
