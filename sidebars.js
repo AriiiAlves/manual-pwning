@@ -30,7 +30,19 @@ const sidebars = {
         id: 'introduction/beginning'
       },
       items: [
-        'introduction/assembly',
+        {
+          type: 'category',
+          label: 'Assembly',
+          link: {
+            type: 'doc',
+            id: 'introduction/assembly/assembly'
+          },
+          items: [
+            'introduction/assembly/2-2-stack',
+            'introduction/assembly/2-3-assembly-pratica',
+            'introduction/assembly/2-1-coding-assembly'
+          ],
+        },
         'introduction/endianness',
         'introduction/ghidra',
         'introduction/gdb',
@@ -108,7 +120,19 @@ const sidebars = {
           ]
         }
       ]
-    }
+    },
+    {
+      type: 'category',
+      label: 'Material extra',
+      link: {
+        type: 'doc',
+        id: 'extra/intro'
+      },
+      items: [
+        'extra/syscall-tb',
+        'extra/shellcraft-li'
+      ],
+    },
   ],
    
 };

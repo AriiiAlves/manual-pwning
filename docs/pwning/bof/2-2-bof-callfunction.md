@@ -23,7 +23,7 @@ Para vencer esse obstáculo, você teria que vazar um endereço de memória, com
 
 Nesses desafios, essa proteção está desativada, e você pode apenas copiar e colar os endereços. Mais adiante abordaremos sobre isso.
 
-### Cuidado ao sobrescrever Return Address: Desalinhamento de Stack
+## Cuidado ao sobrescrever Return Address: Desalinhamento de Stack
 
 Existem algumas funções importantes que utilizam instruções que exigem que a Stack esteja alinhada, como, por exemplo, a função `system("./bin/sh")`. Se seu objetivo for chamar uma função que tenha essa função dentro, o programa vai resultar em falha de segmentação.
 
@@ -55,7 +55,7 @@ Isso vai resultar em **SEGSV (Segmentation Fault)**, e o programa vai crashar.
 
 **Como evitar desalinhamento de stack**? Há duas maneiras.
 
-#### 1° - Evitando PUSH RBP
+### 1° - Evitando PUSH RBP
 
 Suponha que a função para a qual queremos pular está em `0x00000001`. A instrução PUSH RBP ocupa 1 byte de memória. Portanto, para pular para a próxima, basta usar o endereço `0x00000002`.
 
@@ -65,13 +65,13 @@ target_address = 0x401234 + 1  # Pula o push rbp
 
 Ou você pode verificar o endereço da próxima instrução ao PUSH RBP no decompilador ou gdb.
 
-#### 2° - ROP com ret
+### 2° - ROP com ret
 
 Essa técnica é mais confiável e robusta. **[ROP (Return Oriented Programming)](/docs/pwning/rop/8-1-rop) é uma técnica de exploração que usa pedaços de códigos já existentes no programa (gadgets) para executar código malicioso**. 
 
-Basicamente, vamos **achar o endereço na memória de uma instrução** `ret`, um **gadget**. Isso só é possível **se a proteção PIE não estiver ativada** (randomização de memória),
+Basicamente, vamos **achar o endereço na memória de uma instrução** `ret`, um **gadget**. Isso só é possível **se a proteção PIE/ASLR não estiver ativada** (randomização de memória),
 
-##### Buscando gadget
+#### Buscando gadget
 
 Podemos usar o comando Linux (deve ser instalado) `ROPgadget`: `ROPgadget -- binary meu_programa | grep "ret"`.
 
@@ -92,7 +92,7 @@ Assim, podemos montar nosso payload.
 
 Mas, antes de usarmos esse `ret`, vamos entender por que ele funciona.
 
-##### Por que `ret`?
+#### Por que `ret`?
 
 No **fim de uma função qualquer**, sempre teremos as instruções:
 ```
@@ -147,7 +147,7 @@ E:
 
 Veja, alinhamos com 16 bytes agora.
 
-##### Código em pwntools
+#### Código em pwntools
 
 ```py
 

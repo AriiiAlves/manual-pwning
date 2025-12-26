@@ -122,33 +122,6 @@ dec rdi; ret               # rdi--
 
 Para fazer chamadas de sistema diretamente.
 
-Syscalls são interfaces que permitem que programas em modo usuário solicitem serviços do kernel do sistema operacional, como acesso a hardware, criação de processos, gerenciamento de arquivos, etc. Para fazer uma syscall damos o número da syscall (operação que queremos), os argumentos e em seguida usamos o comando da syscall, como vemos abaixo.
-
-```
-;x86-64
-
-mov rax, syscall_number  ; Número da syscall
-mov rdi, arg1            ; Primeiro argumento
-mov rsi, arg2            ; Segundo argumento
-mov rdx, arg3            ; Terceiro argumento
-mov r10, rcx             ; Quarto argumento (rcx não usado)
-mov r8, r8               ; Quinto argumento
-mov r9, r9               ; Sexto argumento
-syscall                  ; Instrução para chamar o kernel
-
-; x86
-
-mov eax, syscall_number  ; Número da syscall
-mov ebx, arg1            ; Primeiro argumento
-mov ecx, arg2            ; Segundo argumento
-mov edx, arg3            ; Terceiro argumento
-int 0x80                 ; Interrupção para chamar o kernel
-```
-
-Para ver cada syscall, seu código, parâmetros e o que faz, recomendo olhar a [Tabela de Syscalls no Linux - IME USP](https://www.ime.usp.br/~kon/MAC211/syscalls.html). Caso queira utilizar alguma, pesquise individualmente.
-
-Os gadgets para syscall são:
-
 ```
 # x86-64
 syscall; ret
