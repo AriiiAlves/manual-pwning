@@ -85,6 +85,9 @@ const sidebars = {
           },
           items: [
             'pwning/rop/8-2-partial-overwrite',
+            'pwning/rop/8-3-stack-pivoting',
+            'pwning/rop/8-4-sigrop',
+            'pwning/rop/8-5-ret2libc'
           ],
         },
       ],
@@ -130,7 +133,8 @@ const sidebars = {
       },
       items: [
         'extra/syscall-tb',
-        'extra/shellcraft-li'
+        'extra/shellcraft-li',
+        'extra/call-convention'
       ],
     },
   ],

@@ -65,11 +65,11 @@ If you are using GitHub pages for hosting, this command is a convenient way to b
 
 ## Return Oriented Programming (ROP)
 - **Return Oriented Programming** - Encadeia instruções existentes (gadgets) terminadas em ret para construir payloads ✅
-  - **Partial Overwrite** - Modifica apenas parte de um endereço para contornar ASLR
-  - **Stack Pivoting** - Redireciona a stack para região de memória controlada pelo atacante
-  - **SIGROP (SROP)** - Explora sinais Unix usando estrutura sigcontext para controlar registradores
-  - **ret2csu** - Usa gadgets em __libc_csu_init para configurar múltiplos argumentos
-  - **ret2system** - Retorna para função system() com argumento controlado para obter shell
+  - **Partial Overwrite** - Modifica apenas parte de um endereço para contornar ASLR ✅
+  - **Stack Pivoting** - Redireciona a stack para região de memória controlada pelo atacante ✅
+  - **SIGROP (SROP)** - Explora sinais Unix usando estrutura sigcontext para controlar registradores ✅
+  - **ret2csu** - Usa gadgets em __libc_csu_init para configurar múltiplos argumentos 
+  - **ret2system** - Retorna para função system() com argumento controlado para obter shell ✅
 
 ## Heap Exploitation
 - **Heap Exploitation** - Explora vulnerabilidades no gerenciador de memória dinâmica

@@ -15,5 +15,5 @@ Referências utilizadas:
 
 Créditos:
 
-- [Ganesh - ICMC USP](https://ganesh.icmc.usp.br/en) - Ao grupo que me fez conhecer o mundo do pwning.
+- [Ganesh - ICMC USP](https://ganesh.icmc.usp.br/en) - Ao grupo que me fez conhecer o mundo de cybersec.
 - [Ariel Alves](https://github.com/AriiiAlves) - Autor.

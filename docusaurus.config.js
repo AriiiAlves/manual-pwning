@@ -27,8 +27,8 @@ const config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'AriiiAlves', // Usually your GitHub org/user name.
-  projectName: 'Manual-Pwning', // Usually your repo name.
+  organizationName: 'ariiialves', // Usually your GitHub org/user name.
+  projectName: 'manual-pwning', // Usually your repo name.
 
   onBrokenLinks: 'ignore',
   deploymentBranch: 'gh-pages',

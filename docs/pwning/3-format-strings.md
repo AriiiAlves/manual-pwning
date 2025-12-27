@@ -155,9 +155,16 @@ ESP+8 → segundo argumento, etc.
 
 Quando printf("%x") é chamado:
 - printf espera encontrar o valor para %x em ESP+4
-- Mas ESP+4 contém o endereço de retorno ou lixo
+- Mas ESP+8 contém o endereço de retorno ou lixo
 
-### x64 (32-bit)
+```
+EBP+0   → RBP antigo
+EBP+4   → endereço de retorno
+ESP+8 → possivelmente o primeiro argumento (se houvesse)
+ESP+12 → segundo argumento, etc.
+```
+
+### x86-64 (64-bit)
 
 - Os primeiros argumentos são passados em registradores
 - `printf` vai primeiro olhar nos registradores que armazenam parâmetros (`RDI`, `RSI`, `RDX`, `RCX`, `R8`, `R9`)
