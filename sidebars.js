@@ -69,6 +69,7 @@ const sidebars = {
             'pwning/bof/2-1-bof-variables',
             'pwning/bof/2-2-bof-callfunction',
             'pwning/bof/2-3-bof-shellcode',
+            'pwning/bof/debruijn',
           ],
         },
         'pwning/format-strings',
