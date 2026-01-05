@@ -90,6 +90,18 @@ const sidebars = {
             'pwning/rop/8-5-ret2libc'
           ],
         },
+        {
+          type: 'category',
+          label: 'Heap',
+          link: {
+            type: 'doc',
+            id: 'pwning/heap/heap'
+          },
+          items: [
+            'pwning/heap/uaf',
+            'pwning/heap/malloc_consolidate'
+          ],
+        }
       ],
     },
     /* Fast Food */

@@ -1,0 +1,49 @@
+---
+title: Use-After-Free
+---
+
+Use-After-Free é uma vulnerabilidade onde um programa **continua usando um ponteiro para memória que já foi liberada** com `free()`.
+
+```c
+char *ptr = malloc(100);  // Aloca memória
+free(ptr);                // Libera a memória
+// ...
+strcpy(ptr, "data");      // ERRO: Usa ptr depois de free! ← USE-AFTER-FREE
+```
+
+Usar `free()` não muda o valor da variável `*ptr`, apenas faz o processo interno de liberar o chunk na heap.
+
+Após `free()`, a memória pode ser reutilizada por outras alocações ou reutilizada pelo próprio alocador.
+
+Podemos imaginar o UAF como um "portal mágico" para a heap, que nos permite espiar ou modificar a heap.
+
+## Leitura/Escrita
+
+Podemos usar UAF para ler/escrever na heap.
+
+```c
+// Aloca um buffer
+char *buffer = malloc(100);
+strcpy(buffer, "Dados importantes");
+
+// Libera o buffer
+free(buffer);  // Memória volta para o alocador
+
+// ERRO: Continua usando o ponteiro!
+
+// Leitura
+printf("Buffer: %s\n", buffer);  // Pode imprimir lixo ou dados de outra alocação
+
+// Escrita
+strcpy(buffer, "Novos dados");  // Pode sobrescrever estruturas do heap!
+```
+
+## Execução
+
+Se existe código que tenta executar uma função alocada dinamicamente na heap, podemos colocar uma instrução qualquer no endereço apontado por `obj` e em seguida isso será executado, por exemplo.
+
+```c
+// Se ptr apontava para uma função virtual (C++) ou callback
+free(obj);
+obj->vtable->func();  // Chama função através de ponteiro liberado
+```
