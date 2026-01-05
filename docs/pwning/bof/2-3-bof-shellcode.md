@@ -65,34 +65,19 @@ Código para cada arquitetura:
 - `x64` - 59
 
 ```nasm
-; Executa /bin/sh
+; Executa Execve("/bin/sh", NULL, NULL)
 mov rax, 59           ; syscall número 59 = execve
-lea rdi, [rel bin_sh] ; arg1: pathname = "/bin/sh"
+
+mov rdi, 0x68732f6e69622f2f ; arg1: pathname = "/bin/sh"
+push rbx
+mov rdi, rsp
+
 xor rsi, rsi          ; arg2: argv = NULL
 xor rdx, rdx          ; arg3: envp = NULL
 syscall
-
-bin_sh: db '/bin/sh',0       ;(mude o caminho para executar outros programas)
 ``` 
 
-Exemplo:
-
-```nasm
-section .data
-    path db '/bin/ls', 0
-    arg0 db '/bin/ls', 0
-    arg1 db '-l', 0
-    args dq arg0, arg1, 0  ; Array de argumentos
-
-section .text
-global _start
-_start:
-    mov rax, 59        ; execve syscall
-    lea rdi, [path]    ; caminho do programa
-    lea rsi, [args]    ; argumentos
-    xor rdx, rdx       ; envp = NULL
-    syscall
-```
+A função Execve espera um ponteiro para uma string, não a string. Portanto, colocamos ela na stack primeiro. Quando damos `push`, `rsp` contém o ponteiro para a string.
 
 ### File Descriptors (fd)
 
