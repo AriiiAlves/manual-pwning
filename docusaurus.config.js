@@ -78,6 +78,12 @@ const config = {
         theme: {
           customCss: './src/css/custom.css',
         },
+        sitemap: {
+          changefreq: 'weekly',
+          priority: 0.5,
+          ignorePatterns: ['/tags/**'],
+          filename: 'sitemap.xml',
+        }
       }),
     ],
   ],
@@ -85,6 +91,10 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      metadata: [
+        { name: 'keywords', content: 'pwning, cybersecurity, ctf, binary exploitation, hacking'},
+        { name: 'description', content: 'Manual em português de técnicas de pwning e exploit development para CTFs.'}
+      ],
       tableOfContents: {
         maxHeadingLevel: 5, // Inclui até ##### (h5)
       },
