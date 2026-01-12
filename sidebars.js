@@ -77,6 +77,7 @@ const sidebars = {
         'pwning/integer-overflow',
         'pwning/bad-seed',
         'pwning/z3',
+        'pwning/got',
         {
           type: 'category',
           label: 'ROP (Return-Oriented Programming)',

@@ -76,6 +76,8 @@ Impede com que áreas da memória que deveriam conter apenas dados sejam executa
 
 Na inicialização do processo, o sistema operacional carrega a base do executável, bibliotecas compartilhadas (como `libc`), a Stack e a Heap em **endereços de memória aleatórios e diferentes a cada execução**.
 
+Enquanto PIE é desativado ao compilar o binário, o ASLR é um configuração do Kernel/Sistema Operacional (afeta os endereços da `libc`).
+
 **Efeito**
 
 Endereços do executável randomizados toda vez que ele roda. Mesmo que você tenha o executável, os endereços que você obtiver serão inúteis na máquina alvo, onde você tem apenas um `input` e mais nada.
@@ -91,3 +93,21 @@ Recurso do compilador (GCC/Clang) que substitui chamadas a funções C inseguras
 **Efeito**
 
 Ajuda a evitar alguns Buffer Overflows simples, mas apenas se o compilador conseguir determinar o tamanho do buffer de destino.
+
+## IBT (Indirect Branch Tracking)
+
+O IBT (Indirect Branch Tracking) é uma proteção de hardware contra ataques de redirecionamento de fluxo de execução. Visa prevenir ataques ROP e JOP.
+
+Com IBT, temos duas novas instruções: `endbr32` (32-bit) e `endbr64` (64 bit)
+
+Essas instruções são NOPs que não fazem nada durante a execução normal, mas são verificadas pelo hardware quando ocorre um salto indireto (`jmp` ou `call`).
+
+Assim, o compilador insere ENDBR no início de funções, destinos de ponteiros de função, etc (destinos válidos!). Se um `jmp` ou `call` não leva o RIP até um ENDBR primeiro, ocorre uma falha e o programa encerra.
+
+**Efeito**
+
+Isso limita 99% das aplicações práticas de ROP e JOP.
+
+**Contorno**
+
+Usar gadgets que começam com ENDBR (destino válido).
