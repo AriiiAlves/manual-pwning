@@ -72,12 +72,12 @@ If you are using GitHub pages for hosting, this command is a convenient way to b
   - **ret2system** - Retorna para função system() com argumento controlado para obter shell ✅
 
 # GOT/PLT Overwrite
-- **GOT/PLT Overwrite** - Sobrescreve entradas na Global Offset Table (GOT) ou Procedure Linkage Table (PLT) para redirecionar chamadas de função
+- **GOT/PLT Overwrite** - Sobrescreve entradas na Global Offset Table (GOT) ou Procedure Linkage Table (PLT) para redirecionar chamadas de função ✅
 
 ## Heap Exploitation
 - **Heap Exploitation** - Explora vulnerabilidades no gerenciador de memória dinâmica ✅
 
-  - **Use-after-Frees** - Usa ponteiro para memória já liberada com dados controlados
+  - **Use-after-Frees** - Usa ponteiro para memória já liberada com dados controlados ✅
   - **Double Frees** - Libera um chunk de memória duas vezes, corrompendo estruturas do heap
   - **Heap Grooming** - Organiza layout do heap de forma previsível para facilitar explorações
 

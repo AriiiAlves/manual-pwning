@@ -60,36 +60,42 @@ const sidebars = {
         'pwning/1-1-protections',
         {
           type: 'category',
-          label: 'Buffer Overflow',
+          label: 'Stack',
           link: {
             type: 'doc',
-            id: 'pwning/bof/2-0-bof'
+            id: 'pwning/stack/intro'
           },
           items: [
-            'pwning/bof/2-1-bof-variables',
-            'pwning/bof/2-2-bof-callfunction',
-            'pwning/bof/2-3-bof-shellcode',
-            'pwning/bof/debruijn',
-          ],
-        },
-        'pwning/format-strings',
-        'pwning/array-indexing',
-        'pwning/integer-overflow',
-        'pwning/bad-seed',
-        'pwning/z3',
-        'pwning/got',
-        {
-          type: 'category',
-          label: 'ROP (Return-Oriented Programming)',
-          link: {
-            type: 'doc',
-            id: 'pwning/rop/8-1-rop'
-          },
-          items: [
-            'pwning/rop/8-2-partial-overwrite',
-            'pwning/rop/8-3-stack-pivoting',
-            'pwning/rop/8-4-sigrop',
-            'pwning/rop/8-5-ret2libc'
+            {
+              type: 'category',
+              label: 'Buffer Overflow',
+              link: {
+                type: 'doc',
+                id: 'pwning/stack/bof/2-0-bof'
+              },
+              items: [
+                'pwning/stack/bof/2-1-bof-variables',
+                'pwning/stack/bof/2-2-bof-callfunction',
+                'pwning/stack/bof/2-3-bof-shellcode',
+                'pwning/stack/bof/debruijn',
+              ],
+            },
+            'pwning/stack/format-strings',
+            {
+              type: 'category',
+              label: 'ROP (Return-Oriented Programming)',
+              link: {
+                type: 'doc',
+                id: 'pwning/stack/rop/8-1-rop'
+              },
+              items: [
+                'pwning/stack/rop/8-2-partial-overwrite',
+                'pwning/stack/rop/8-3-stack-pivoting',
+                'pwning/stack/rop/8-4-sigrop',
+                'pwning/stack/rop/8-5-ret2libc'
+              ],
+            },
+            'pwning/stack/got'
           ],
         },
         {
@@ -101,7 +107,22 @@ const sidebars = {
           },
           items: [
             'pwning/heap/uaf',
-            'pwning/heap/malloc_consolidate'
+            'pwning/heap/malloc_consolidate',
+            'pwning/heap/double-free'
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Outros',
+          link: {
+            type: 'doc',
+            id: 'pwning/others/intro'
+          },
+          items: [
+            'pwning/others/array-indexing',
+            'pwning/others/integer-overflow',
+            'pwning/others/bad-seed',
+            'pwning/others/z3',
           ],
         }
       ],
