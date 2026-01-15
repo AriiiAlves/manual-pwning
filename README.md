@@ -117,3 +117,28 @@ If you are using GitHub pages for hosting, this command is a convenient way to b
   - **Custom Architecture** - Explora binários para arquiteturas não convencionais
   - **Emulation** - Usa emuladores para análise dinâmica em ambientes controlados
   - **Uninitialized Variables** - Usa variáveis não inicializadas com dados residuais para vazar informações
+
+# Notas
+
+Colocar:
+
+```
+---
+title: CatchTheFox
+slug: /
+---
+```
+
+No intro.md resolveu o problema de ter que redirecionar! E:
+
+```
+presets: [
+    [
+      'classic',
+      /** @type {import('@docusaurus/preset-classic').Options} */
+      ({
+        docs: {
+          routeBasePath: '/',
+```
+
+Também resolveu, em config.

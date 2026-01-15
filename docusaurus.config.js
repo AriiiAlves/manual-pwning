@@ -37,8 +37,8 @@ const config = {
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en'],
+    defaultLocale: 'pt-BR',
+    locales: ['pt-BR'],
   },
 
 
@@ -54,27 +54,30 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
+          routeBasePath: '/',
           sidebarPath: './sidebars.js',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           /*editUrl:
             'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',*/
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
+          // ATIVAR BLOG SÓ DEPOIS
+          // blog: {
+          //   showReadingTime: true,
+          //   feedOptions: {
+          //     type: ['rss', 'atom'],
+          //     xslt: true,
+          //   },
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           /*editUrl:
             'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',*/
           // Useful options to enforce blogging best practices
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
+        //   onInlineTags: 'warn',
+        //   onInlineAuthors: 'warn',
+        //   onUntruncatedBlogPosts: 'warn',
+        // },
+        blog: false,
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -92,8 +95,8 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       metadata: [
-        { name: 'keywords', content: 'pwning, cybersecurity, ctf, binary exploitation, hacking'},
-        { name: 'description', content: 'Manual em português de técnicas de pwning e exploit development para CTFs.'}
+        { name: 'keywords', content: 'catchthefox, pwning, cybersecurity, ctf, binary exploitation, hacking'},
+        { name: 'description', content: 'CatchTheFox é um cyber handbook em português de técnicas de pwning e exploit development para CTFs.'}
       ],
       tableOfContents: {
         maxHeadingLevel: 5, // Inclui até ##### (h5)
@@ -114,7 +117,7 @@ const config = {
             type: 'docSidebar',
             sidebarId: 'tutorialSidebar',
             position: 'left',
-            label: 'HandBook',
+            label: 'Guia',
           },
           /*{to: '/blog', label: 'Blog', position: 'left'},*/ // Ativar futuramente caso queira fazer um blog
           {
@@ -131,8 +134,8 @@ const config = {
             title: 'Aprenda',
             items: [
               {
-                label: 'HandBook',
-                to: '/docs/intro',
+                label: 'Guia',
+                to: '/',
               },
             ],
           },
