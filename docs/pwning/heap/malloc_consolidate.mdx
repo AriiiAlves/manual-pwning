@@ -142,6 +142,24 @@ Portanto, o essencial é **saber como ativar a consolidação do fastbin**. Algu
 
 Ambos os métodos funcionam porque alocações que caem na categoria de largebin (ou que exigem manipulação especial de blocos grandes) frequentemente invocam `malloc_consolidate` para fundir blocos livres e reduzir a fragmentação antes de atender a uma requisição grande. Ao inspecionar o código-fonte do `malloc.c` na glibc, é possível identificar outros gatilhos específicos, como chamadas a `malloc` com tamanhos muito grandes, uso de `realloc` em certas condições, ou até mesmo a liberação massiva de memória em situações de pressão de heap.
 
+## Consolidação automática no free() comum
+
+Vimos só sobre fastbin, mas a consolidação acontece SEMPRE ao liberar chunks small/large:
+
+```c
+char *a = malloc(0x100);  // Small chunk (não fastbin!)
+char *b = malloc(0x100);
+char *c = malloc(0x100);
+
+free(a);  // Já vai para unsorted bin
+free(c);  // Já vai para unsorted bin
+
+free(b);  // CONSOLIDA AUTOMATICAMENTE com 'a' e 'c'!
+// Resultado: um chunk de ~0x300 na unsorted bin
+```
+
+Isso não 
+
 ## Resumo
 
 1. Chunks na fastbin → só vazam endereços da heap

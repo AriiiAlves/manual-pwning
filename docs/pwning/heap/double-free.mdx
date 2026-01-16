@@ -55,3 +55,35 @@ Boom, temos escrita arbitrária nesse endereço.
 3. Alocar chunk do mesmo tamanho do que foi liberado
 4. Inserir payload (endereço para onde queremos ir) como dados no chunk que acabamos de alocar (`strcpy(b, "\x78\x56\x34\x12")`, por exemplo)
 5. Alocar outro chunk do mesmo tamanho. O ponteiro retornado para esse chunk alocado agora aponta para o endereço onde queríamos ir.
+
+## Proteções
+
+### Fasttop (Double Free check)
+
+É uma proteção bem simples e fácil de ser quebrada. Ela verifica: "o chunk que está no topo da bin é o mesmo sendo liberado?"
+
+Mas basta liberar outro chunk entre o double free (técnica do chunk intermediário):
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int *a = malloc(0x50);
+    int *b = malloc(0x50);
+
+    free(a);
+    free(b); // Isso quebra o fluxo
+    free(a); // Ainda é um double free 
+    
+    return 1;
+}
+```
+
+### Size Check (malloc)
+
+Essa proteção já é mais difícil de passar. Quando o `malloc` remove (aloca) um chunk da fastbin, irá ser verificado o campo `size` armazenado nos metadados do chunk para constar se corresponde ao tamanho esperado de um chunk da fastbin.
+
+Supondo que redirecionamos `fd` para `0x12345678`, se em `0x12345678 - 8` (onde fica o size) não houver um valor que corresponda ao tamanho esperado da fastbin, temos **memory corruption** no `malloc`.
+
+Isso nos força a encontrar endereços-alvo onde os bytes pareçam metadados válidos, e um GOT Overwrite, por exemplo, se torna mais difícil.

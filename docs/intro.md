@@ -5,6 +5,8 @@ slug: /
 
 Este guia foi projetado para ser um manual o mais completo possível acerca de Engenharia Reversa e Pwning. Ele está todo em Português-BR.
 
+O site ainda está em construção. Se quiser contribuir ou corrigir algum conteúdo, sinta-se à vontade para interagir com o [Repositório do GitHub](https://github.com/ariiialves/manual-pwning) ou mandando um email `catchthefoxproject@gmail.com`.
+
 Temos 2 tipos de conteúdo aqui: O **For-Theorists** e o **Fast-Food**. Se você é um CTFer descontrolado e não suporta textos grandes, temos um guia prático apenas com o que você deve saber para explorar vulnerabilidades e resolver desafios em CTFs. É bem mais enxuto e provavelmente você não vai entender tudo nos mínimos detalhes, então recomendo saber a teoria para resolver desafios mais difíceis.
 
 Toda a hierarquia de tópicos foi baseada no [Nightmare (Assembly)](https://guyinatuxedo.github.io/index.html), e inclusive alguns tópicos possuem informações extraídas dele. Sendo assim, **enquanto esse guia possui a teoria, o Nightmare possui os binários para você treinar**, além de writeups (explicação) de cada um deles. Use como material de apoio.

@@ -54,3 +54,16 @@ article h6 {
 [data-theme='dark'] .navbar__logo img {
   background-color: transparent !important;
 }
+
+code:not(pre code) {
+  margin: 0px 2px 0px 2px;
+  padding: 0 5px;
+}
+
+[data-theme='dark'] code {
+  border: 1px solid #494949 !important;
+}
+
+[data-theme='light'] code {
+  border: 1px solid #dadada !important;
+}

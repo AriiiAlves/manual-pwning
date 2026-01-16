@@ -96,7 +96,11 @@ const config = {
     ({
       metadata: [
         { name: 'keywords', content: 'catchthefox, pwning, cybersecurity, ctf, binary exploitation, hacking'},
-        { name: 'description', content: 'CatchTheFox é um cyber handbook em português de técnicas de pwning e exploit development para CTFs.'}
+        { name: 'description', content: 'CatchTheFox é um cyber handbook em português de técnicas de pwning e exploit development para CTFs.'},
+        { property: 'og:title', content: 'CatchTheFox - Aprenda Pwning' },
+        { property: 'og:description', content: 'Manual de técnicas de pwning e exploit development para CTFs' },
+        { property: 'og:image', content: 'https://ariiialves.github.io/manual-pwning/img/logo.png' },
+        { property: 'og:type', content: 'website' }
       ],
       tableOfContents: {
         maxHeadingLevel: 5, // Inclui até ##### (h5)

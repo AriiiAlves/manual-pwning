@@ -1,0 +1,90 @@
+---
+title: Unlink Attack
+---
+
+Quando um chunk é removido de uma bin, `unlink()` é chamado para esse chunk. Isso pode acontecer:
+
+1. Durante consolidação (malloc_consolidate)
+2. Ao alocar um chunk de uma bin
+3. Ao mover chunk entre bins
+
+A macro da função `unlink()`:
+
+```c
+#define unlink(P, BK, FD) {
+    FD = P->fd;           // FD = próximo chunk
+    BK = P->bk;           // BK = chunk anterior
+    FD->bk = BK;          // próximo->bk = anterior
+    BK->fd = FD;          // anterior->fd = próximo
+}
+```
+
+Basicamente, removemos um chunk do meio e "costuramos" os chunks ao lado. Os vizinhos são conectados diretamente.
+
+- Antes de unlink(B): A ↔ B ↔ C
+- Depois de unlink(B): A ↔ C
+
+Agora note a vulnerabilidade. As operações de unlink eram:
+
+``` 
+FD->bk = BK;  // *(FD + 0x18) = BK
+BK->fd = FD;  // *(BK + 0x10) = FD
+```
+
+Em 32-bit, temos (FD + 0xc) e (BK + 0x8).
+
+Percebeu? São escritas arbitrárias na memória! Se controlarmos `fd` e `bk` de um chunk falso, podemos fazer:
+
+```c
+// Controlamos fd e bk:
+fake_chunk->fd = target_address - 0x18
+fake_chunk->bk = value
+
+// Quando unlink(fake_chunk):
+FD->bk = BK
+// ↓
+*(target_address - 0x18 + 0x18) = valor_desejado
+// ↓
+*target_address = value  // ARBITRARY WRITE! 🎯
+```
+
+## Proteção safe-unlinking (glibc 2.3.4+)
+
+A partir de 2004, adicionaram verificações:
+
+```c
+#define unlink(AV, P, BK, FD) {
+    FD = P->fd;
+    BK = P->bk;
+    
+    // PROTEÇÕES ADICIONADAS:
+    if (__builtin_expect(FD->bk != P || BK->fd != P, 0))
+        malloc_printerr("corrupted double-linked list");
+        
+    FD->bk = BK;
+    BK->fd = FD;
+}
+```
+
+Basicamente, isso verifica:
+
+```c
+P->fd->bk == P  // próximo chunk aponta de volta para P?
+P->bk->fd == P  // chunk anterior aponta de volta para P?
+```
+
+Se falhar, aborta o programa com "corrupted double-linked list".
+
+Para contornar essa proteção, é necessário fazer `P->fd->bk` e `P->bk->fd` apontarem de volta para `P`. Para isso funcionar, precisamos de DOIS endereços controláveis na memória, `A` e `B`.
+
+1. Armazenamos o endereço de `P` em um local `A`  também em `B` (A = B = &P)
+2. Se fizermos `P->fd = A - offset(chunk, bk)` e `P->bk = B - offset(chunk, fd)`, então:
+    - `P->fd->bk` será `*A = &P`
+    - `P->bk->fd` será `*B = &P`
+3. A verificação passa, mas quando o `unlink` prossegue, escrevemos o valor `A` no endereço apontado por `B`.
+
+
+Isso nos limita bastante, pois o valor escrito é relacionado ao locais conhecidos A e B, e não valores arbitrários. Isso pode ser útil para:
+
+- Modificar ponteiros de função (se B for ponteiro de função)
+- Vazar endereços

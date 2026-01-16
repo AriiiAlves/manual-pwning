@@ -47,6 +47,7 @@ const sidebars = {
         'introduction/ghidra',
         'introduction/gdb',
         'introduction/pwntools',
+        'introduction/radare2'
       ],
     },
     {
@@ -106,9 +107,24 @@ const sidebars = {
             id: 'pwning/heap/heap'
           },
           items: [
+            'pwning/heap/heap-overflow',
             'pwning/heap/uaf',
+            'pwning/heap/double-free',
+            'pwning/heap/unlink',
             'pwning/heap/malloc_consolidate',
-            'pwning/heap/double-free'
+            'pwning/heap/chunk-overlapping',
+            'pwning/heap/tcache',
+            {
+              type: 'category',
+              label: 'Malloc Maleficarum',
+              link: {
+                type: 'doc',
+                id: 'pwning/heap/malloc-maleficarum/intro'
+              },
+              items: [
+                'pwning/heap/malloc-maleficarum/house-of-force',
+              ]
+            }
           ],
         },
         {

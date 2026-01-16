@@ -1,0 +1,105 @@
+---
+title: Radare2 (r2) (Todo)
+--- 
+
+Radare2 é um framework avançado de código aberto para análise de binários. Sua interface é via linha de comando. É uma alternativa ao gdb.
+
+Instale com: `sudo apt-get install radare2`
+
+## Conceitos básicos
+
+### Abrindo um binário
+
+```bash
+# Modo básico
+r2 /caminho/para/binario
+
+# Modo write (permite modificações)
+r2 -w /caminho/para/binario
+
+# Com modo de depuração
+r2 -d /caminho/para/binario
+```
+
+### Comandos
+
+Navegação:
+
+- `?` - Ajuda geral
+- `?*` - Lista todos os comandos
+- `q` - Sair
+
+Informação:
+
+- `i` - Informações do binário
+- `iI` - Informações detalhadas
+- `iz` - Strings no binário
+- `is` - Símbolos
+- `il` - Bibliotecas
+
+Modos de visualização:
+
+- `V` - Entra no modo visual
+- `Vp` - Modo de gráfico (gráfico de funções)
+- `VV` - Modo visual interativo
+
+### Análise estática
+
+Desmontagem
+
+- `pd` - Desmontar no endereço atual
+- `pd 20` - Desmontar 20 instruções
+- `pdf` - Desmontar função atual
+- `@ main` - Ir para a função main
+- `pd @ main` - Desmontar função main
+
+Análise de funções
+
+- `afl` - Listar todas as funções
+- `afll` - Listar funções com detalhes
+- `afvn` - Renomear variáveis locais
+
+Análise de Strings
+
+- `izz` - Extrair todas as Strings
+- `izzq`  - Strings com formato JSON
+- `/z flag` - Buscar strings específicas
+
+Cross-references
+
+- `ax` - Lsitar referências
+- `axf` - Referências a funções
+- `axt @ sym.main` - Referências para main
+
+Análise de seções
+
+- `iS` - Listar seções
+- `iS` - Seções em JSON
+
+### Análise dinâmica
+
+Iniciar depuração: `r2 -d ./binario`. Ou dentro do binário: `doo` (reabrir em modo depuração) ou `ood` (reabrir com argumentos)
+
+Controle de execução
+
+- `db` - Listar breakpoints
+- `db 0x8048450` - Definir breakpoints
+- `db - 0x8048450` - Remover breakpoint
+- `dc` - Continuar execução
+- `ds` - Step (passo a passo)
+- `dso` - Step over (executa função sem entrar nela)
+- `dsi` - Step into (entra dentro da função/sub-rotina)
+
+Inspeção de memória
+
+- `dm` - Mapa da memória
+- `px 64` - Hexdump de 64 bytes
+- `pxw 32` - Hexdump words
+- `pxq 16` - Hexdump quads
+- `psz 50` - Print string de 50 chars
+
+Registradores
+
+- `dr` - Mostrar Registradores
+- `dr eax` - Mostrar valor de EAX
+- `dr eax=0x10` - Definir EAX para 0x10
