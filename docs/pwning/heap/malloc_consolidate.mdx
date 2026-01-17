@@ -1,5 +1,5 @@
 ---
-title: Vazando libc com malloc_consolidate
+title: Vazando libc com malloc_consolidate (Todo)
 ---
 
 O fastbin não se consolida automaticamente, apenas quando a função `malloc_consolidate()` é chamada. A função pode parecer complicada, mas seu papel é percorrer todos os chunks nas fastbins, **unir aqueles que são adjacentes na memória** para formar chunks maiores e, em seguida, **inserir esses chunks consolidados na unsorted bin**.

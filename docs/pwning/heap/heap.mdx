@@ -4,7 +4,7 @@ title: Heap
 
 ## O que é Heap?
 
-A heap é uma área de memória diferente da stack. Nela, variáveis podeam ser dinamicamente alocadas. Enquanto variáveis locais são criadas e destruídas toda vez que você entra/sai de uma função, a heap permanece até o fim do programa. Se a stack é criada automaticamente, a heap é criada manualmente pelo programador. Isso abre bastante margem de erro e exploração de vulnerabilidades.
+A heap é uma área de memória diferente da stack. Nela, variáveis podem ser dinamicamente alocadas. Enquanto variáveis locais são criadas e destruídas toda vez que você entra/sai de uma função, a heap permanece até o fim do programa. Se a stack é criada automaticamente, a heap é criada manualmente pelo programador. Isso abre bastante margem de erro e exploração de vulnerabilidades.
 
 Por exemplo:
 
@@ -33,7 +33,7 @@ No C, podemos alocar memória com:
 
 O que `malloc` e `calloc` retornam é um ponteiro. Ou seja:
 
-1. malloc(4)
+1. `malloc(4)`
 2. Pedimos para reservar 4 bytes de memória na heap
 3. malloc reserva e retorna o ponteiro/endereço do início da memória reservada. Uma variável `y` recebe esse ponteiro/endereço.
 4. quando fazemos `y* = 15`, o `*` acessa o endereço de `y` e coloca nosso dado lá. O lixo que estava lá some após essa atribuição.

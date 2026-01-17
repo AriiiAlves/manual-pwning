@@ -27,25 +27,23 @@ Basicamente, removemos um chunk do meio e "costuramos" os chunks ao lado. Os viz
 Agora note a vulnerabilidade. As operações de unlink eram:
 
 ``` 
-FD->bk = BK;  // *(FD + 0x18) = BK
-BK->fd = FD;  // *(BK + 0x10) = FD
+FD->bk = BK;  // *(FD + 0x18) = BK             (em 32-bit, é FD + 0xc)
+BK->fd = FD;  // *(BK + 0x10) = FD             (em 32-bit, é BK + 0x8)
 ```
 
-Em 32-bit, temos (FD + 0xc) e (BK + 0x8).
-
-Percebeu? São escritas arbitrárias na memória! Se controlarmos `fd` e `bk` de um chunk falso, podemos fazer:
+Percebeu? São escritas arbitrárias na memória! Se controlarmos `fd` e `bk` de um chunk, podemos fazer:
 
 ```c
 // Controlamos fd e bk:
-fake_chunk->fd = target_address - 0x18
-fake_chunk->bk = value
+chunk->fd = target_address - 0x18
+chunk->bk = value
 
 // Quando unlink(fake_chunk):
 FD->bk = BK
 // ↓
 *(target_address - 0x18 + 0x18) = valor_desejado
 // ↓
-*target_address = value  // ARBITRARY WRITE! 🎯
+*target_address = value  // ARBITRARY WRITE!
 ```
 
 ## Proteção safe-unlinking (glibc 2.3.4+)
