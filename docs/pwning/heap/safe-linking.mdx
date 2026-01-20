@@ -1,0 +1,162 @@
+---
+title: Safe Linking
+---
+
+Safe-Linking é um mecanismo de proteção implementado na glibc (a partir da versão 2.32) para dificultar exploits de heap, especificamente ataques que manipulam listas de chunks livres (free lists).
+
+## Antes do Safe Linking
+
+Nas tcache bins e fastbins, chunks livres formam listas simplesmente encadeadas:
+
+```
+chunk->fd aponta diretamente para o próximo chunk livre
+```
+
+Isso era vulnerável pois `fd`podia ser sobrescrito, fazendo `malloc()` retornar um endereço arbitrário ([Double Free Attack](/pwning/heap/double-free#passo-a-passo)).
+
+## Safe Linking
+
+O Safe linking ofusca o ponteiro `fd` usando a seguinte operação:
+
+```c
+#define PROTECT_PTR(pos, ptr) \
+  ((__typeof (ptr)) ((((size_t) pos) >> 12) ^ ((size_t) ptr)))
+#define REVEAL_PTR(ptr)  PROTECT_PTR (&ptr, ptr)
+```
+
+Onde `pos` é o endereço do chunk atual e `ptr` é endereço do próximo chunk apontado (`fd`). Podemos ver a macro de um modo simplificado:
+
+```py
+# PROTECT_PTR (codifica)
+fd_encoded = (&chunk >> 12) ^ fd
+
+# REVEAL_PTR
+fd_real = ((&fd_encoded >> 12) ^ fd_encoded) 
+```
+
+Onde `fd` contém o endereço do próximo chunk, `&chunk` é o endereço do chunk atual e `&fd_encoded` é o endereço da variável `fd` no chunk.
+
+- `&chunk >> 12`: Desloca todos os bits para a direita por 12 posições, descartando os bits da direita e preenchendo com zeros à esquerda. 
+    - Ex: `0x0000555555559000 >> 12 = 0x0000000555555559` (cada hex representa 4 bits, pois `1111 = 15 (decimal) = f (hex)`).
+    - `&chunk >> 12` elimina os 12 bits (`0x...aaa`) previsíveis do ASLR, mantendo apenas os bits restantes.
+- `&chunk_shift ^ fd`: Operador bit a bit XOR. Tabela verdade do XOR:
+
+A | B | A ^ B
+:---:|:---:|:---:
+0 | 0 |   0
+0 | 1 |   1
+1 | 0 |   1
+1 | 1 |   0
+
+
+Note que `&chunk >> 12` e `&fd_encoded >> 12` são iguais! Isso pois os possuem uma diferença de 8 bytes (`+0x8`). Assim, ao descartar os 12 bits finais, essa diferença some. É como se estivéssemos usando `&chunk_addr >> 12` novamente (truque de sintaxe para otimização). Assim, podemos simplificar para:
+
+```py
+# PROTECT_PTR (codifica)
+fd_encoded = (&chunk >> 12) ^ fd
+
+# REVEAL_PTR
+fd_real = (&chunk >> 12) ^ &fd_encoded
+```
+
+O XOR pode ser tratado como uma espécie de criptografia do `fd`. Uma propriedade interessante do XOR é que ele é reversível. Assim:
+
+```
+(A ^ B) ^ A = B ^ (A ^ A) = B ^ 0 = B 
+```
+
+A macro `REVEAL_PTR` utiliza esse princípio para poder reverter o XOR! (fazendo o XOR de `fd_encoded` com `&chunk >> 12` novamente). De modo prático:
+
+```
+&chunk = 0x5555555592a0
+fd = 0x555555558090
+
+----------------------- Codificando -------------------------
+
+fd                = 0x0000555555558090
+&chunk >> 12      = 0x0000000555555559
+                    ---------------------- XOR bit a bit
+fd_encoded        = 0x000055500000D5C9
+
+----------------------- Decodificando -----------------------
+
+fd_encoded        = 0x000055500000D5C9
+&chunk >> 12      = 0x0000000555555559
+                    ---------------------- XOR bit a bit
+fd_real        = 0x0000555555558090
+```
+
+veja  que recuperamos o fd_real.
+
+É importante ressaltar que o Safe-linking protege apenas listas encadeadas simples (Tcache, fastbins). Isso pois listas duplamente encadeadas (unsorted bin, small/large bins) possuem `fd` e `bk` que precisam ser consistentes entre si, e a macro `PROTECT_PTR` não é adequada.
+
+### E os 12 bits perdidos?
+
+O `<< 12` elimina os bits de `&chunk`, não de `fd_real`. Assim, `&chunk >> 12` é usado na ofuscação do `fd`, mas ao fazer `fd_encoded ^ (&chunk << 12)` o `fd` original é recuperado, pela propriedade do XOR.
+
+Assim, não temos nenhum dado perdido.
+
+### Por que isso protege?
+
+1. **Ofuscação dependente de posição**: O valor codificado depende do endereço do próprio `&chunk`. **Dois chunks diferentes terão codificações diferentes mesmo apontando para o mesmo destino**.
+2. **Impossível forjar sem vazamento**: Para criar um `fd_encoded` válido que aponte para `target`, precisamos saber `&chunk >> 12` (qualquer endereço próximo do chunk com limite de 12 bits).
+
+## O ataque
+
+Para passar pelo safe-linking precisamos obter um `fd_encoded` válido, de modo que quando for descriptografado por `REVEAL_PTR` utilize o `fd` forjado por nós. Se queremos fazer o chunk apontar para um endereço arbitrário `target`, precisamos escrever:
+
+```py
+fd_overwrite = (&chunk_atual >> 12) ^ target
+```
+
+Assim, tudo de que precisamos é vazar a heap para obter o `&chunk_atual`. Na verdade, como a operação faz `&chunk_atual >> 12`, os 12 bits menos significativos não fazem diferença e qualquer endereço de chunk **próximo fisicamente na memória** vazado pode ser utilizado na operação `(&chunk_atual >> 12)` (os 12 bits menos significativos serão descartados).
+
+## Proteção introduzida com Safe Linking: Alignment Check
+
+Além da proteção XOR do Safe-Linking, foi adicionada uma verificação de alinhamento que **garante que todos os chunks estejam alinhados em 16 ou 8 bytes**. Isso impacta diretamente a possibilidade de fazer **partial overwrites**.
+
+Antes do Safe-Linking, o Partial Overwrite consistia em sobrescrever apenas os últimos bytes do ponteiro `fd`, mantendo os bytes superiores (que contêm o ASLR) intactos. assim, não precisávamos vazar endereços completos, redirecionando para chunks "próximos" na heap.
+
+O Partial Overwrite é uma espécie de ataque cego, mas que funciona se não temos como vazar endereços.
+
+Com alignment check, o glibc passa a verificar se o chunk é múltiplo de 16 usando estas macros:
+
+```c
+#define MALLOC_ALIGNMENT (2 * SIZE_SZ)  // 16 bytes em sistemas 64-bit, 8 bytes em 32 bits
+#define MALLOC_ALIGN_MASK (MALLOC_ALIGNMENT - 1)  // = 15 (0xF) em 64-bit, = 7 (0x7) em 32-bit
+
+#define aligned_OK(m)  (((unsigned long)(m) & MALLOC_ALIGN_MASK) == 0)
+```
+
+Basicamente, isso faz `&chunk & 0x0000000f == 0x00000000`. Ou seja, verifica se os últimos 4 bits (ou o último dígito hexadecimal) são iguais a 0.
+
+```
+// 64-bit
+0x555555559000 & 0xF = 0x0  ✓ Alinhado (termina em 0)
+0x555555559010 & 0xF = 0x0  ✓ Alinhado (termina em 0)
+
+Isso pois: apenas (0000 (0) & 1111 (15)) == 0000.
+
+// 32-bit
+0x56555000 & 0x7 = 0x0  ✓ Alinhado (termina em 0 ou 8)
+0x56555008 & 0x7 = 0x0  ✓ Alinhado (termina em 0 ou 8)
+
+Isso pois: apenas (1000 (8) & 0111 (7)) == (0000 (8) & 0111 (7)) == 0000.
+```
+
+E no que isso impacta? Bom, em 64-bits, de 256 valores possíveis para 1 byte (0x00 até 0xFF), apenas 16 valores resultam em alinhamento de 16 bytes. Isso reduz drasticamente nossa capacidade de partial overwrite para um endereço arbitrário. Somos obrigados a usar endereços que terminem em `0x0`.
+
+Em 32-bits, somos obrigados a usar endereços que terminem com `0x0` ou `0x8`.
+
+### Onde Alignment Check está implementado?
+
+Ele foi implementado em:
+
+- `tcache_get`: Quando tenta-se tirar um chunk `e` do `tcache`
+- `_int_malloc()`: Há três verificações
+    - Quando removemos um chunk da fastbin
+    - No primeiro chunk retornado (ao usuário) da fastbin
+    - Em todo chunk da fastbin transferido ao tcache (Quando tcache está habilitado e malloc() encontra um fastbin não vazio, ele transfere múltiplos chunks do fastbin para o tcache correspondente)
+- `_int_free()`: Quando free() é chamado e o chunk vai para a tcache.
+- `malloc_consolidate()`: Quando todos os fastbins são consolidados para a unsorted bin.
+- Outros: Existem outros lugares onde isto foi implementado, mas não é importante para atacantes.

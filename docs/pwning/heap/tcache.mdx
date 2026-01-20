@@ -1,5 +1,5 @@
 ---
-title: Tcache
+title: Tcache (End Tcache Keys)
 ---
 
 A partir da [glibc 2.26](https://elixir.bootlin.com/glibc/glibc-2.26/source/malloc/malloc.c), um novo tipo de bin foi adicionado: o `tcache` (thread cache). Ele foi criado para substituir as `fastbins` e `smallbins`, que agora somente são usadas se o `tcache` estiver desabilitado, indisponível ou cheio. O `tcache` foi desenvolvido para melhorar a performance do malloc, e sua operação é simples: todo tamanho de chunk (até no máximo 0x410) possui seu próprio **tcache bin**, que pode armazenar no máximo 7 chunks. Se o tcache ficar cheio, o próximo chunk a ser adicionado vai ser tratado normalmente e vai para o `fastbin` ou `unsorted bin` (para ser realocado depois para `smallbin` e `largebin`).
@@ -19,3 +19,26 @@ Em [malloc consolidate](/pwning/heap/malloc_consolidate), falamos um pouco sobre
 Quando o `tcache` está cheio para um tamanho específico, o chunk liberado vai ser alocado para uma das bins. O limite máximo de chunk aceito pela fast bin é de `160 bytes`. Porém, a `glibc` limita o tamanho máximo para `128 bytes` usando a variável global `global_max_fast` por padrão (caso queira ler mais: [Open Euler - Glibc Malloc Source Code Analisis](https://www.openeuler.org/en/blog/wangshuo/Glibc_Malloc_Source_Code_Analysis_(1).html)). 
 
 Lembre-se que, em 64-bits, se damos `malloc(0x50)`, na verdade estamos alocando um chunk de `0x50 + 0x10` bytes (metadados). Bom, isso quer dizer que se dermos `free` em 8 chunks do **mesmo tamanho** cujo tamanho seja **maior** que `128 bytes`, o oitavo irá parar na `unsorted bin`, e não na `fast bin`, por conta de seu tamanho. E se tivermos acesso ao ponteiro para o chunk mesmo depois do `free` (um Use-After-Free), BOOM! Ao ler o conteúdo desse ponteiro, ali estará `fd` apontando para um endereço dentro da `libc`.
+
+## Tcache Keys (glibc 2.29) (TODO)
+
+Tcache keys são um campo adicional nos chunks tcache para detectar double-free. É um ponteiro que aponta para a estrutura `tcache_perthread_struct` quando o chunk está na tcache. O campo `key` fica logo após `fd` do chunk.
+
+```c
+// Chunk na TCACHE (2.27)
+struct malloc_chunk {
+    size_t prev_size;
+    size_t size;
+    struct malloc_chunk *fd;  // next chunk na tcache
+    // resto vazio
+};
+
+// Chunk na TCACHE (2.28)
+struct malloc_chunk {
+    size_t prev_size;
+    size_t size;
+    struct malloc_chunk *fd;   // next chunk na tcache
+    uintptr_t key;             // ← NOVO! Ponteiro para tcache_perthread_struct
+    // resto vazio
+};
+```

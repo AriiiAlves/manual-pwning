@@ -48,6 +48,50 @@ const config = {
     }
   },
 
+  headTags: [
+    {
+      tagName: 'meta',
+      attributes: { property: 'og:title', content: 'CatchTheFox - Manual de Pwning' },
+    },
+    {
+      tagName: 'meta',
+      attributes: { property: 'og:description', content: 'Manual completo de técnicas de pwning e exploit development para CTFs em Português-BR' },
+    },
+    {
+      tagName: 'meta',
+      attributes: { property: 'og:image', content: 'https://ariiialves.github.io/manual-pwning/img/logo.png' },
+    },
+    {
+      tagName: 'meta',
+      attributes: { property: 'og:url', content: 'https://ariiialves.github.io/manual-pwning/' },
+    },
+    {
+      tagName: 'meta',
+      attributes: { property: 'og:type', content: 'website' },
+    },
+    {
+      tagName: 'meta',
+      attributes: { property: 'og:locale', content: 'pt_BR' },
+    },
+    {
+      tagName: 'meta',
+      attributes: { name: 'twitter:card', content: 'summary_large_image' },
+    },
+    {
+      tagName: 'meta',
+      attributes: { name: 'twitter:image', content: 'https://ariiialves.github.io/manual-pwning/img/logo.png' },
+    },
+    // Meta tag adicional para o título
+    {
+      tagName: 'meta',
+      attributes: { name: 'apple-mobile-web-app-title', content: 'CatchTheFox' },
+    },
+    {
+      tagName: 'meta',
+      attributes: { name: 'application-name', content: 'CatchTheFox' },
+    },
+  ],
+
   presets: [
     [
       'classic',
@@ -95,12 +139,8 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       metadata: [
-        { name: 'keywords', content: 'catchthefox, pwning, cybersecurity, ctf, binary exploitation, hacking'},
-        { name: 'description', content: 'CatchTheFox é um cyber handbook em português de técnicas de pwning e exploit development para CTFs.'},
-        { property: 'og:title', content: 'CatchTheFox - Aprenda Pwning' },
-        { property: 'og:description', content: 'Manual de técnicas de pwning e exploit development para CTFs' },
-        { property: 'og:image', content: 'https://ariiialves.github.io/manual-pwning/img/logo.png' },
-        { property: 'og:type', content: 'website' }
+        { name: 'keywords', content: 'catchthefox, catch the fox, pwning, cybersecurity, ctf, binary exploitation, hacking'},
+        { name: 'description', content: 'CatchTheFox é um cyber handbook em português de técnicas de pwning e exploit development para CTFs.'}
       ],
       tableOfContents: {
         maxHeadingLevel: 5, // Inclui até ##### (h5)

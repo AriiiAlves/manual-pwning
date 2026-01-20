@@ -1,6 +1,8 @@
 ---
-title: CatchTheFox
 slug: /
+title: CatchTheFox
+description: Manual de técnicas de pwning e exploit development para CTFs em Português-BR.
+image: /img/logo.png
 ---
 
 Este guia foi projetado para ser um manual o mais completo possível acerca de Engenharia Reversa e Pwning. Ele está todo em Português-BR.

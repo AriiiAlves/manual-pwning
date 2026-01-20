@@ -47,7 +47,6 @@ const sidebars = {
         'introduction/ghidra',
         'introduction/gdb',
         'introduction/pwntools',
-        'introduction/radare2'
       ],
     },
     {
@@ -112,7 +111,6 @@ const sidebars = {
             'pwning/heap/double-free',
             'pwning/heap/unlink',
             'pwning/heap/malloc_consolidate',
-            'pwning/heap/chunk-overlapping',
             'pwning/heap/tcache',
             {
               type: 'category',
@@ -124,7 +122,9 @@ const sidebars = {
               items: [
                 'pwning/heap/malloc-maleficarum/house-of-force',
               ]
-            }
+            },
+            'pwning/heap/safe-linking',
+            'pwning/heap/glibc-versions'
           ],
         },
         {
