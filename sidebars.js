@@ -175,6 +175,24 @@ const sidebars = {
         }
       ]
     },
+    /* Writeups */
+    {
+      type: 'category',
+      label: 'WriteUps',
+      link: {
+        type: 'doc',
+        id: 'writeups/intro'
+      },
+      items: [
+        {
+          type: 'category',
+          label: 'Heap',
+          items: [
+            'writeups/heap/67',
+          ]
+        },
+      ]
+    },
     {
       type: 'category',
       label: 'Material extra',
