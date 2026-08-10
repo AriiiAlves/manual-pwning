@@ -192,13 +192,17 @@ Ex: `xor rdx, rax`
 
 ### push
 
-**Cresce a stack em 8 ou 4 bytes** (para x64, ou 4 para x86), **depois** **adiciona o conteúdo do registrador para o topo da stack**
+**Cresce a stack em 8 ou 4 bytes** (para x64, ou 4 para x86), **depois** **adiciona o conteúdo do registrador para o topo da stack**.
+
+É uma redução de: `sub rsp, 8`, `mov [rsp], rax`
 
 Ex: `push rax`
 
 ### pop
 
 Tira 8 bytes do topo da stack e armazena no argumento. Depois encolhe a stack.
+
+É uma redução de: `mov rax, [rsp]`, `add rsp, 8`
 
 Ex: `pop rax` (Retira dado do topo da Stack e armazena em RAX)
 
@@ -221,13 +225,20 @@ Ex: `jmp 0x60201012`
 1. `push RIP` - empilha Return Address na stack. É o endereço de retorno da PRÓXIMA instrução a ser executada na função atual quando a nova função retornar.
 2. `jmp function`- Salta para as linhas de instrução da nova função.
 
-### ret
+Ex: `call 0x60201012`
 
-Depois que a função finaliza, **a instrução `ret` é chamada**. Ela consiste em uma redução de comando:
+### leave e ret
 
-`pop RIP` - Desempilha topo da stack (que deve ser o return address) e coloca no RIP (registrador que guarda o endereço de onde está sendo executado código)
+Depois que a função finaliza, **A instrução `leave` é chamada**. Sua função é **desfazer o stack frame**, e consiste em uma redução de comando:
 
-Você pode se perguntar: Mas o topo da stack não tem as variáveis, RBP antigo, etc? Sim, exato. Por isso, antes da função finalizar, temos ajustes na stack:
+1. `mov rbp, rsp` - Restaura RSP para a base do frame atual
+2. `pop rbp` - Restaura RBP do frame anterior
+
+Após o `leave`, **a instrução `ret` é chamada**. Ela consiste em uma redução de comando:
+
+`pop RIP` - Desempilha topo da stack (que agora deve ser o return address) e coloca no RIP (registrador que guarda o endereço de onde está sendo executado código)
+
+O `leave` e `ret` fazem o processo de encerramento da função.
 
 ```assembly
 mov RBP, RSP ; RSP (topo da stack) agora é RBP, que contém endereço do RBP da função anterior

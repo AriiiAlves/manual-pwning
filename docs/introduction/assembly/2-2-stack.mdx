@@ -61,36 +61,70 @@ Lembre-se que **RSP e RBP NÃO ESTÃO NA STACK, eles são apenas registradores d
 Imagine o seguinte código:
 
 ```C
-1. int main(){ 
-2.    imprimir_soma(1, 2, 3);
-3.    int a  = 0;
-4.    return 0;
-5. }
+#include<stdio.h>
+
+void imprimir_soma(int a, int b, int c){
+        printf("%d, %d, %d", a,b,c);
+}
+
+int main(){
+        imprimir_soma(1,2,3);
+        int a = 0;
+        return 0;
+}
 ```
 
 Sempre que **chamamos uma nova função**, o Assembly faz:
 
-```
-; Primeiro, empilha argumentos da nova função (apenas a partir do 7° argumento. Os anteriores ficam em registradores. Se for 32-bits, TUDO fica na stack)
-push arg3           ; 3
-push arg2           ; 2
-push arg1           ; 1
+```assembly
+[...]
+; Primeiro, estabelece argumentos da nova função
+mov edx, 0x3 ; Argumento 3 no registrador edx
+mov esi, 0x2 ; Argumento 2 no registrador esi
+mov edi, 0x1 ; Argumento 1 no registrador edi
 
 ; Então o call
-call imprimir_soma
-; O call faz: push RIP (Return address) na pilha (depois que acabarmos a função, queremos voltar para a linha 3, certo?)
-; Depois: RIP = endereço da função (Começamos a executar a função)
+call 0x400466 <imprimir_soma>
 
+; Indo para função...
 imprimir_soma:
-    ; SALVAR O FRAME ANTIGO
-    push rbp           ; 1. Salvar RBP antigo na pilha (após imprimir_soma, queremos continuar a função antiga main e resgatar seu stack frame)
-    
+    ; SALVAR FRAME ANTIGO
+    push rbp ; Após imprimir_soma, queremos continuar a função antiga main e resgatar seu stack frame
+
     ; CONFIGURAR NOVO FRAME
-    mov rbp, rsp       ; 2. RBP = RSP ("Saltamos" o stack frame atual, e construímos um novo stack frame agora, com uma nova base)
-    
+    mov rbp, rsp ; RBP = RSP ("Saltamos" o stack frame atual, e construímos um novo stack frame agora, com uma nova base)
+
     ; ALOCAR ESPAÇO PARA VARIÁVEIS LOCAIS
-    sub rsp, 0x20      ; 3. Reservar espaço na pilha
+    sub rsp, 0x10 ; Reserva espaço na pilha
+
+    ; GUARDANDO VARIÁVEIS LOCAIS (argumentos recebido)
+    mov DWORD PTR [rbp-0x4],edi
+    mov DWORD PTR [rbp-0x8],esi
+    mov DWORD PTR [rbp-0xc],edx
+
+    ; NOVOS ARGUMENTOS DE FUNÇÃO
+    mov ecx, DWORD PTR [rbp-0xc]
+    mov edx, DWORD PTR [rbp-0x8]
+    mov eax, DWORD PTR [rbp-0x4]
+    mov esi, eax
+    mov edi, 0x401180
+    mov eax, 0x0
+
+    ; CHAMANDO OUTRA FUNÇÃO
+    call 0x400370 <printf@plt>
+
+    ; SAINDO DA FUNÇÃO
+    leave
+    ret
+
+; AO VOLTAR 
+mov DWORD PTR [rbp-0x4],0x0 ; int a = 0
+mov eax, 0x0 ; return 0
+leave
+ret
 ```
+
+Obs: Em 64-bit, os argumentos da função são passados diretamente aos registradores, em uma ordem específica para o 1°, 2° argumentos, etc. A partir o 7° argumento, começam-se a colocar os argumentos na stack, com `push <valor>`. Em 32-bit, TODOS os argumentos são inseridos na stack.
 
 ### Elementos da Stack
 
