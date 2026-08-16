@@ -46,6 +46,7 @@ const sidebars = {
         'introduction/endianness',
         'introduction/ghidra',
         'introduction/gdb',
+        'introduction/ida-pro',
         'introduction/pwntools',
       ],
     },

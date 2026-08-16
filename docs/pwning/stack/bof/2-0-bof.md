@@ -101,7 +101,7 @@ E se decidirmos colocar uma string gigante?
 
 ```
 < AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-> Você digitou: James
+> Você digitou: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 ```
 
 Olhe só nossa stack agora:

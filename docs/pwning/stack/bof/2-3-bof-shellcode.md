@@ -317,10 +317,11 @@ Tome cuidado, pois NOPs podem ter um byte diferente em outras arquiteturas. Assi
 Antes de criar o shellcode, vamos montar um programa para testar shellcode em C:
 
 ```C
-void (*shellcode)() = "[insira seu shellcode aqui]";
-
 int main(void) {
-    (*shellcode)();
+    // Array local fica na pilha (stack)
+    char shellcode[] = "[insira seu shellcode aqui]";
+    
+    ((void (*)(void))shellcode)();
     return 0;
 }
 ```
@@ -377,10 +378,11 @@ cd 80
 Colocando eles no nosso testador:
 
 ```c
-void (*shellcode)() = "\xb8\x01\x00\x00\x00\xbb\x0a\x00\x00\x00\xcd\x80";
-
 int main(void) {
-    (*shellcode)();
+    // Array local fica na pilha (stack)
+    char shellcode[] = "\xb8\x01\x00\x00\x00\xbb\x0a\x00\x00\x00\xcd\x80";
+    
+    ((void (*)(void))shellcode)();
     return 0;
 }
 ```
@@ -389,7 +391,7 @@ Compilando e executando:
 
 ```bash
 ./testador
-echo $?
+echo $? => Imprime 10
 ```
 
 Podemos ver que o código de saída é 10, como esperado.
